@@ -1,0 +1,6 @@
+[package]
+name = "giraf"
+version = "0.1.0"
+authors = ["owen <owen@oms.sh>"]
+
+[dependencies]
