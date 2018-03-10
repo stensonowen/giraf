@@ -17,31 +17,34 @@ use vertex::{Vertex, Node};
 pub struct Graph<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
-    edges: Vec<Edge<V,D,W>>,
-    vertices: HashSet<Vertex<V,D,W>>,
+
+    //edges: Vec<Edge<V,D,W>>,
+    //vertices: HashSet<Vertex<V,D,W>>,
+
     //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
+    nodes: HashSet<Vertex<V,D,W>>,
 }
 
 impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Graph<V,D,W> {
     pub fn new() -> Self {
         Graph {
-            edges: Vec::new(),
-            vertices: HashSet::new(),
-            //nodes: HashMap::new(),
+            //edges: Vec::new(),
+            //vertices: HashSet::new(),
+            nodes: HashSet::new(),
         }
     }
     /// A vertex can be added to any graph, regarrdless of edge weighted-ness or directed-ness
     pub fn add_vertex(&mut self, val: V) -> &Vertex<V,D,W> {
         let vertex = Vertex::new(val);
-        self.vertices.insert(vertex.clone());
-        self.vertices.get(&vertex).unwrap()
+        self.nodes.insert(vertex.clone());
+        self.nodes.get(&vertex).unwrap()
     }
 
     pub fn contains_value(&self, val: &V) -> bool {
-        self.vertices.contains(val)
+        self.nodes.contains(val)
     }
     pub fn contains_vertex(&self, val: &Vertex<V,D,W>) -> bool {
-        self.vertices.contains(val)
+        self.nodes.contains(val)
     }
 }
 
@@ -52,16 +55,18 @@ impl<V: Node, D: EdgeDir<V,UnweightedEdge>> Graph<V, D, UnweightedEdge> {
     // returns edge reference or None if nothing was added (invalid input)
     // inputs must have `self` lifetime, so they're valid unless deleted
     // can't just take V as input: would need to create Vertex<&V> :/
+    /*
     pub fn add_edge<'a>(&'a mut self, 
                         l: &'a Vertex<V, D, UnweightedEdge>, 
                         r: &'a Vertex<V, D, UnweightedEdge>) 
                         -> Option<&'a Edge<V,D,UnweightedEdge>> {
-        let lhs = self.vertices.get(l)?;
-        let rhs = self.vertices.get(r)?;
+        let lhs = self.nodes.get(l)?;
+        let rhs = self.nodes.get(r)?;
         let edge = Edge::between(lhs.clone(), rhs.clone(), ());
         self.edges.push(edge);
         self.edges.last() // uhh this part should never be none
     }
+    */
 }
 
 
@@ -88,6 +93,21 @@ impl<V: Node> Graph<V, UndirectedEdge, UnweightedEdge> {
 impl<V: Node> Graph<V, DirectedEdge, UnweightedEdge> {
     pub fn new_directed_unweighted() -> Self {
         Self::new()
+    }
+    // returns edge reference or None if nothing was added (invalid input)
+    // inputs must have `self` lifetime, so they're valid unless deleted
+    // could just take &V as input... would that be better?
+    pub fn add_edge<'a>(&'a mut self, 
+                        l: &'a Vertex<V, DirectedEdge, UnweightedEdge>, 
+                        r: &'a Vertex<V, DirectedEdge, UnweightedEdge>) 
+                        -> Option<&'a Edge<V, DirectedEdge, UnweightedEdge>>
+    {
+        let lhs = self.nodes.get(l)?;
+        let rhs = self.nodes.get(r)?;
+        let l_edge = Edge::between(lhs.clone(), rhs.clone(), ());
+        let r_edge = Edge::between(lhs.clone(), rhs.clone(), ());
+        //self.edges.push(edge);
+        None
     }
 }
 

@@ -3,7 +3,6 @@
 
 use std::fmt;
 use std::rc::Rc;
-use std::hash::Hash;
 use vertex::{Vertex, Node};
 use vertex::{VertexDirection, DirectedVertex, UndirectedVertex};
 
@@ -12,11 +11,11 @@ use vertex::{VertexDirection, DirectedVertex, UndirectedVertex};
 // **********          Edge Directions           **********
 // ********************************************************
 
-pub trait EdgeDir<V: Node, W: EdgeWeight>: fmt::Debug + Default + Eq + Hash {
+pub trait EdgeDir<V: Node, W: EdgeWeight>: fmt::Debug + Default {
     type VertexPair: VertexDirection<V, W>;
 }
-#[derive(Debug, Default, PartialEq, Eq, Hash)] pub struct DirectedEdge;
-#[derive(Debug, Default, PartialEq, Eq, Hash)] pub struct UndirectedEdge;
+#[derive(Debug, Default)] pub struct DirectedEdge;
+#[derive(Debug, Default)] pub struct UndirectedEdge;
 impl<V: Node, W: EdgeWeight> EdgeDir<V, W> for DirectedEdge {
     type VertexPair = DirectedVertex<V,W>;
 }
@@ -29,14 +28,14 @@ impl<V: Node, W: EdgeWeight> EdgeDir<V, W> for UndirectedEdge {
 // **********          Edge Weights              **********
 // ********************************************************
 
-pub trait EdgeWeight: fmt::Debug + Eq + Hash {
+pub trait EdgeWeight: fmt::Debug {
     type Weight;
     fn new(w: Self::Weight) -> Self;
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)] pub struct UnweightedEdge;
-#[derive(Debug, PartialEq, Eq, Hash)] pub struct UnsignedEdge(u32);
-#[derive(Debug, PartialEq, Eq, Hash)] pub struct SignedEdge(i32);
+#[derive(Debug)] pub struct UnweightedEdge;
+#[derive(Debug)] pub struct UnsignedEdge(u32);
+#[derive(Debug)] pub struct SignedEdge(i32);
 
 impl EdgeWeight for UnweightedEdge {
     type Weight = ();
