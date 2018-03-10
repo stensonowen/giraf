@@ -2,6 +2,7 @@
 
 use std::fmt;
 use std::collections::HashSet;
+use std::collections::HashMap;
 
 mod edge;
 use edge::{Edge};
@@ -18,6 +19,7 @@ pub struct Graph<V: Node, D: EdgeDirection, W: EdgeWeight> {
     // maybe use `rental` to refer to self? does that mean we can't move G?
     edges: Vec<Edge<V,D,W>>,
     vertices: HashSet<Vertex<V>>,
+    //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
 }
 
 impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
@@ -25,11 +27,12 @@ impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
         Graph {
             edges: Vec::new(),
             vertices: HashSet::new(),
+            //nodes: HashMap::new(),
         }
     }
     /// A vertex can be added to any graph, regarrdless of edge weighted-ness or directed-ness
     pub fn add_vertex(&mut self, val: V) -> &Vertex<V> {
-        let vertex = Vertex::from(val);
+        let vertex = Vertex::new(val);
         self.vertices.insert(vertex.clone());
         self.vertices.get(&vertex).unwrap()
     }
@@ -53,7 +56,7 @@ impl<V: Node, D: EdgeDirection> Graph<V, D, UnweightedEdge> {
         -> Option<&'a Edge<V,D,UnweightedEdge>> {
         let lhs = self.vertices.get(l)?;
         let rhs = self.vertices.get(r)?;
-        let edge = Edge::between(lhs.clone(), rhs.clone());
+        let edge = Edge::between(lhs.clone(), rhs.clone(), ());
         self.edges.push(edge);
         self.edges.last() // uhh this part should never be none
     }
@@ -122,5 +125,7 @@ impl<V: Node> Graph<V, UndirectedEdge, SignedEdge> {
 }
 
 
-
-
+// hmmmm
+//  can I use one vec of edges and only store slices of it?
+//  every edge will be incident to 2 vertices (may be the same)
+//  dude i don't fucken know it's too late
