@@ -48,15 +48,15 @@ pub struct Edge<N: Node, D: EdgeDirection, W: EdgeWeight> {
     weight: W,
     //left: Addr,
     //right: Addr,
-    lhs: Rc<Vertex<N>>,
-    rhs: Rc<Vertex<N>>,
+    lhs: Vertex<N>,
+    rhs: Vertex<N>,
 }
 
 // ********************************************************
 // **********          Unweighted Edge           **********
 // ********************************************************
 impl<N: Node, D: EdgeDirection> Edge<N, D, UnweightedEdge> {
-    pub(crate) fn between(lhs: Rc<Vertex<N>>, rhs: Rc<Vertex<N>>) -> Self {
+    pub(crate) fn between(lhs: Vertex<N>, rhs: Vertex<N>) -> Self {
         Edge {
             dir: D::default(),
             weight: UnweightedEdge,

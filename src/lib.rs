@@ -1,7 +1,6 @@
 #![allow(unused)]
 
 use std::fmt;
-use std::rc::Rc;
 use std::collections::HashSet;
 
 mod edge;
@@ -19,7 +18,7 @@ pub struct Graph<V: Node, D: EdgeDirection, W: EdgeWeight> {
     // maybe use `rental` to refer to self? does that mean we can't move G?
     edges: Vec<Edge<V,D,W>>,
     //vertices: HashSet<Rc<Vertex<V>>>,
-    vertices: HashSet<Rc<Vertex<V>>>,
+    vertices: HashSet<Vertex<V>>,
 }
 
 impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
@@ -32,14 +31,12 @@ impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
     /// A vertex can be added to any graph, regarrdless of edge weighted-ness or directed-ness
     pub fn add_vertex(&mut self, val: V) -> &Vertex<V> {
         let vertex = Vertex::from(val);
-        let rc = Rc::new(vertex);
-        self.vertices.insert(rc.clone());
-        self.vertices.get(&rc).unwrap()
+        self.vertices.insert(vertex.clone());
+        self.vertices.get(&vertex).unwrap()
     }
 
     pub fn contains_vertex(&self, val: &V) -> bool {
-        //self.vertices.get(val)
-        false
+        self.vertices.contains(val)
     }
 }
 
