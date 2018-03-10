@@ -3,7 +3,7 @@
 
 use edge::{Edge,};
 use edge::{EdgeWeight};
-use edge::{EdgeDirection, DirectedEdge, UndirectedEdge};
+use edge::{EdgeDir, DirectedEdge, UndirectedEdge};
 
 use std::fmt;
 use std::rc::Rc;
@@ -14,7 +14,7 @@ use std::marker::PhantomData;
 pub trait Node: fmt::Debug + Eq + Hash {}
 
 pub trait VertexDirection<V: Node, W: EdgeWeight>: fmt::Debug {
-    type EdgePair: EdgeDirection<V, W>;
+    type EdgePair: EdgeDir<V, W>;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>>;
 }
 #[derive(Debug)] 
@@ -40,32 +40,45 @@ impl<V: Node, W: EdgeWeight> VertexDirection<V, W> for UndirectedVertex<V, W> {
 }
 
 #[derive(Debug, Hash, PartialEq, Eq)] 
-pub struct VertexInner<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> {
+pub struct VertexInner<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
     val: V,
     dir: D,
     _w: PhantomData<W>,
 }
 
+impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> VertexInner<V,D,W> {
+    fn new(val: V) -> Self {
+        VertexInner {
+            val,
+            dir: D::default(),
+            _w: PhantomData,
+        }
+    }
+}
+
 
 #[derive(Debug, Hash, PartialEq, Eq)] 
-pub struct Vertex<T: Node>(Rc<T>); 
+pub struct Vertex<V: Node, D: EdgeDir<V,W>, W: EdgeWeight>(Rc<VertexInner<V,D,W>>); 
 
-impl<T: Node> Vertex<T> {
-    pub(crate) fn new(val: T) -> Self { 
-        Vertex(Rc::new(val))
+impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Vertex<V,D,W> {
+    pub(crate) fn new(val: V) -> Self { 
+        //Vertex(Rc::new(val))
+        let vi = VertexInner::new(val);
+        Vertex(Rc::new(vi))
         //Vertex { val: Rc::new(val), }
     }
 }
 
-impl<T: Node> Borrow<T> for Vertex<T> {
-    fn borrow(&self) -> &T {
+impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Borrow<V> for Vertex<V,D,W> {
+    fn borrow(&self) -> &V {
         //&self.val
-        &self.0
+        //&self.0
+        &self.0.val
     }
 
 }
 
-impl<T: Node> Clone for Vertex<T> {
+impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Clone for Vertex<V,D,W> {
     fn clone(&self) -> Self {
         Vertex(self.0.clone())
         //Vertex { val: self.val.clone() }

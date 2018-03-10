@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 mod edge;
 use edge::{Edge};
-use edge::{EdgeDirection, DirectedEdge, UndirectedEdge};
+use edge::{EdgeDir, DirectedEdge, UndirectedEdge};
 use edge::{EdgeWeight, SignedEdge, UnsignedEdge, UnweightedEdge};
 
 mod vertex;
@@ -14,15 +14,15 @@ use vertex::{Vertex, Node};
 
 
 #[derive(Debug)]
-pub struct Graph<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> {
+pub struct Graph<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
     edges: Vec<Edge<V,D,W>>,
-    vertices: HashSet<Vertex<V>>,
+    vertices: HashSet<Vertex<V,D,W>>,
     //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
 }
 
-impl<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> Graph<V,D,W> {
+impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Graph<V,D,W> {
     pub fn new() -> Self {
         Graph {
             edges: Vec::new(),
@@ -31,7 +31,7 @@ impl<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> Graph<V,D,W> {
         }
     }
     /// A vertex can be added to any graph, regarrdless of edge weighted-ness or directed-ness
-    pub fn add_vertex(&mut self, val: V) -> &Vertex<V> {
+    pub fn add_vertex(&mut self, val: V) -> &Vertex<V,D,W> {
         let vertex = Vertex::new(val);
         self.vertices.insert(vertex.clone());
         self.vertices.get(&vertex).unwrap()
@@ -40,7 +40,7 @@ impl<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> Graph<V,D,W> {
     pub fn contains_value(&self, val: &V) -> bool {
         self.vertices.contains(val)
     }
-    pub fn contains_vertex(&self, val: &Vertex<V>) -> bool {
+    pub fn contains_vertex(&self, val: &Vertex<V,D,W>) -> bool {
         self.vertices.contains(val)
     }
 }
@@ -48,12 +48,14 @@ impl<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> Graph<V,D,W> {
 // ******************************************************************
 // **********          Unweighted                          **********
 // ******************************************************************
-impl<V: Node, D: EdgeDirection<V,UnweightedEdge>> Graph<V, D, UnweightedEdge> {
+impl<V: Node, D: EdgeDir<V,UnweightedEdge>> Graph<V, D, UnweightedEdge> {
     // returns edge reference or None if nothing was added (invalid input)
     // inputs must have `self` lifetime, so they're valid unless deleted
     // can't just take V as input: would need to create Vertex<&V> :/
-    pub fn add_edge<'a>(&'a mut self, l: &'a Vertex<V>, r: &'a Vertex<V>) 
-        -> Option<&'a Edge<V,D,UnweightedEdge>> {
+    pub fn add_edge<'a>(&'a mut self, 
+                        l: &'a Vertex<V, D, UnweightedEdge>, 
+                        r: &'a Vertex<V, D, UnweightedEdge>) 
+                        -> Option<&'a Edge<V,D,UnweightedEdge>> {
         let lhs = self.vertices.get(l)?;
         let rhs = self.vertices.get(r)?;
         let edge = Edge::between(lhs.clone(), rhs.clone(), ());
