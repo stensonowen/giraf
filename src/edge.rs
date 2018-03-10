@@ -4,17 +4,24 @@
 use std::fmt;
 use std::rc::Rc;
 use vertex::{Vertex, Node};
+use vertex::{VertexDirection, DirectedVertex, UndirectedVertex};
 
 
 // ********************************************************
 // **********          Edge Directions           **********
 // ********************************************************
 
-pub trait EdgeDirection: fmt::Debug + Default {}
+pub trait EdgeDirection<V: Node, W: EdgeWeight>: fmt::Debug + Default {
+    type VertexPair: VertexDirection<V, W>;
+}
 #[derive(Debug, Default)] pub struct DirectedEdge;
 #[derive(Debug, Default)] pub struct UndirectedEdge;
-impl EdgeDirection for DirectedEdge {}
-impl EdgeDirection for UndirectedEdge {}
+impl<V: Node, W: EdgeWeight> EdgeDirection<V, W> for DirectedEdge {
+    type VertexPair = DirectedVertex<V,W>;
+}
+impl<V: Node, W: EdgeWeight> EdgeDirection<V, W> for UndirectedEdge {
+    type VertexPair = UndirectedVertex<V,W>;
+}
 
 
 // ********************************************************
@@ -50,7 +57,7 @@ impl EdgeWeight for SignedEdge {
 // ********************************************************
 
 #[derive(Debug)]
-pub struct Edge<N: Node, D: EdgeDirection, W: EdgeWeight> {
+pub struct Edge<N: Node, D: EdgeDirection<N,W>, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
     weight: W,
@@ -61,7 +68,7 @@ pub struct Edge<N: Node, D: EdgeDirection, W: EdgeWeight> {
 // ********************************************************
 // **********          Edge                      **********
 // ********************************************************
-impl<N: Node, D: EdgeDirection, W: EdgeWeight> Edge<N, D, W> {
+impl<N: Node, D: EdgeDirection<N,W>, W: EdgeWeight> Edge<N, D, W> {
     pub fn between(l: Vertex<N>, r: Vertex<N>, w: W::Weight) -> Self {
         Edge {
             dir: D::default(),
@@ -75,7 +82,7 @@ impl<N: Node, D: EdgeDirection, W: EdgeWeight> Edge<N, D, W> {
 // ********************************************************
 // **********          Unweighted Edge           **********
 // ********************************************************
-impl<N: Node, D: EdgeDirection> Edge<N, D, UnweightedEdge> {
+impl<N: Node, D: EdgeDirection<N,UnweightedEdge>> Edge<N, D, UnweightedEdge> {
     /*
     pub(crate) fn between(lhs: Vertex<N>, rhs: Vertex<N>) -> Self {
         Edge {
@@ -90,7 +97,7 @@ impl<N: Node, D: EdgeDirection> Edge<N, D, UnweightedEdge> {
 // ********************************************************
 // **********          Edge with Unsigned Weights**********
 // ********************************************************
-impl<N: Node, D: EdgeDirection> Edge<N, D, UnsignedEdge> {
+impl<N: Node, D: EdgeDirection<N,UnsignedEdge>> Edge<N, D, UnsignedEdge> {
     //pub(crate) fn between_(lhs: Vertex<N>, rhs: Vertex<N>) -> Self { }
 }
 
@@ -100,4 +107,16 @@ impl<N: Node, D: EdgeDirection> Edge<N, D, UnsignedEdge> {
 impl<N: Node, W: EdgeWeight> Edge<N, UndirectedEdge, W> {
     //pub(crate) fn between(lhs: Vertex<N>, rhs: Vertex<N>, 
 
+}
+
+// ********************************************************
+// **********          Directed Edge             **********
+// ********************************************************
+impl<N: Node, W: EdgeWeight> Edge<N, DirectedEdge, W> {
+    pub(crate) fn get_src(&self) -> &Vertex<N> {
+        &self.lhs
+    }
+    pub(crate) fn get_dst(&self) -> &Vertex<N> {
+        &self.rhs
+    }
 }

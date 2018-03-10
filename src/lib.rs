@@ -14,7 +14,7 @@ use vertex::{Vertex, Node};
 
 
 #[derive(Debug)]
-pub struct Graph<V: Node, D: EdgeDirection, W: EdgeWeight> {
+pub struct Graph<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
     edges: Vec<Edge<V,D,W>>,
@@ -22,7 +22,7 @@ pub struct Graph<V: Node, D: EdgeDirection, W: EdgeWeight> {
     //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
 }
 
-impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
+impl<V: Node, D: EdgeDirection<V,W>, W: EdgeWeight> Graph<V,D,W> {
     pub fn new() -> Self {
         Graph {
             edges: Vec::new(),
@@ -48,7 +48,7 @@ impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
 // ******************************************************************
 // **********          Unweighted                          **********
 // ******************************************************************
-impl<V: Node, D: EdgeDirection> Graph<V, D, UnweightedEdge> {
+impl<V: Node, D: EdgeDirection<V,UnweightedEdge>> Graph<V, D, UnweightedEdge> {
     // returns edge reference or None if nothing was added (invalid input)
     // inputs must have `self` lifetime, so they're valid unless deleted
     // can't just take V as input: would need to create Vertex<&V> :/
@@ -129,3 +129,5 @@ impl<V: Node> Graph<V, UndirectedEdge, SignedEdge> {
 //  can I use one vec of edges and only store slices of it?
 //  every edge will be incident to 2 vertices (may be the same)
 //  dude i don't fucken know it's too late
+// todo
+//  unify letters used for Vertex data (T/V/N)
