@@ -6,7 +6,7 @@ use std::collections::HashSet;
 mod edge;
 use edge::{Edge};
 use edge::{EdgeDirection, DirectedEdge, UndirectedEdge};
-use edge::{EdgeWeight, WeightedEdge, UnweightedEdge};
+use edge::{EdgeWeight, SignedEdge, UnsignedEdge, UnweightedEdge};
 
 mod vertex;
 use vertex::{Vertex, Node};
@@ -17,7 +17,6 @@ pub struct Graph<V: Node, D: EdgeDirection, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
     edges: Vec<Edge<V,D,W>>,
-    //vertices: HashSet<Rc<Vertex<V>>>,
     vertices: HashSet<Vertex<V>>,
 }
 
@@ -35,7 +34,10 @@ impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
         self.vertices.get(&vertex).unwrap()
     }
 
-    pub fn contains_vertex(&self, val: &V) -> bool {
+    pub fn contains_value(&self, val: &V) -> bool {
+        self.vertices.contains(val)
+    }
+    pub fn contains_vertex(&self, val: &Vertex<V>) -> bool {
         self.vertices.contains(val)
     }
 }
@@ -85,22 +87,40 @@ impl<V: Node> Graph<V, DirectedEdge, UnweightedEdge> {
 }
 
 // ******************************************************************
-// **********          Directed, Weighted                  **********
+// **********          Directed, Unsigned Weights          **********
 // ******************************************************************
-impl<V: Node> Graph<V, DirectedEdge, WeightedEdge> {
+impl<V: Node> Graph<V, DirectedEdge, UnsignedEdge> {
     pub fn new_directed_weighted() -> Self {
+        Self::new()
+    }
+}
+// ******************************************************************
+// **********          Directed, Signed Weights            **********
+// ******************************************************************
+impl<V: Node> Graph<V, DirectedEdge, SignedEdge> {
+    pub fn new_directed_weighted_signed() -> Self {
         Self::new()
     }
 }
 
 // ******************************************************************
-// **********          Undirected, Weighted                **********
+// **********          Undirected, Unsigned Weights        **********
 // ******************************************************************
-impl<V: Node> Graph<V, UndirectedEdge, WeightedEdge> {
+impl<V: Node> Graph<V, UndirectedEdge, UnsignedEdge> {
     pub fn new_undirected_weighted() -> Self {
         Self::new()
     }
 }
+
+// ******************************************************************
+// **********          Undirected, Signed Weights          **********
+// ******************************************************************
+impl<V: Node> Graph<V, UndirectedEdge, SignedEdge> {
+    pub fn new_undirected_weighted_signed() -> Self {
+        Self::new()
+    }
+}
+
 
 
 

@@ -23,17 +23,13 @@ impl EdgeDirection for UndirectedEdge {}
 // **********          Edge Weights              **********
 // ********************************************************
 
-pub trait EdgeWeight: fmt::Debug {
-    fn get_weight(&self) -> usize;
-}
+pub trait EdgeWeight: fmt::Debug { }
 #[derive(Debug)] pub struct UnweightedEdge;
-#[derive(Debug)] pub struct WeightedEdge(usize);
-impl EdgeWeight for UnweightedEdge {
-    fn get_weight(&self) -> usize { 0 }
-}
-impl EdgeWeight for WeightedEdge {
-    fn get_weight(&self) -> usize { self.0 }
-}
+#[derive(Debug)] pub struct UnsignedEdge(u32);
+#[derive(Debug)] pub struct SignedEdge(i32);
+impl EdgeWeight for UnweightedEdge { }
+impl EdgeWeight for UnsignedEdge { }
+impl EdgeWeight for SignedEdge { }
 
 
 
@@ -46,8 +42,6 @@ pub struct Edge<N: Node, D: EdgeDirection, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
     weight: W,
-    //left: Addr,
-    //right: Addr,
     lhs: Vertex<N>,
     rhs: Vertex<N>,
 }
@@ -68,4 +62,7 @@ impl<N: Node, D: EdgeDirection> Edge<N, D, UnweightedEdge> {
 // ********************************************************
 // **********          Undirected Edge           **********
 // ********************************************************
-//impl<W: 
+impl<N: Node, W: EdgeWeight> Edge<N, UndirectedEdge, W> {
+    //pub(crate) fn between(lhs: Vertex<N>, rhs: Vertex<N>, 
+
+}
