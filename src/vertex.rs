@@ -1,18 +1,33 @@
+// TODO
+//  make sure Vertex::Hash just shims T::hash (so users can define their own equality)
+
 use std::fmt;
+use std::hash::Hash;
 
-use Addr;
+pub trait Node: fmt::Debug + Eq + Hash {}
 
-pub trait Node: fmt::Debug {}
-
-#[derive(Debug)] 
+#[derive(Debug, Hash, Eq)] 
 pub struct Vertex<T: Node> {
     val: T,
-    addr: Addr, // is this necessary?
 }
 
 impl<T: Node> Vertex<T> {
-    pub(crate) fn from(val: T, addr: Addr) -> Self {
-        Vertex { val, addr }
+    pub(crate) fn from(val: T) -> Self {
+        Vertex { val, }
+    }
+    //pub(crate) fn inner(&self) -> &T { self.val }
+}
+
+impl<T: Node> PartialEq<T> for Vertex<T> {
+    fn eq(&self, other: &T) -> bool {
+        self.val == *other
     }
 }
+
+impl<T: Node> PartialEq<Vertex<T>> for Vertex<T> {
+    fn eq(&self, other: &Vertex<T>) -> bool {
+        self.val == other.val
+    }
+}
+
 

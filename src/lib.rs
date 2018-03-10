@@ -1,7 +1,8 @@
 #![allow(unused)]
 
 use std::fmt;
-use std::collections::HashMap;
+use std::rc::Rc;
+use std::collections::HashSet;
 
 mod edge;
 use edge::{Edge};
@@ -11,57 +12,51 @@ use edge::{EdgeWeight, WeightedEdge, UnweightedEdge};
 mod vertex;
 use vertex::{Vertex, Node};
 
-type AddrType = usize;
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-struct Addr(AddrType);
-
-/*
-pub trait Node: fmt::Debug {}
-
-#[derive(Debug)] 
-struct Vertex<T: Node> {
-    val: T,
-    addr: Addr, // is this necessary?
-}
-*/
 
 #[derive(Debug)]
 pub struct Graph<V: Node, D: EdgeDirection, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
-    addresses: HashMap<Addr, Vertex<V>>,
-    edges: Vec<Edge<D,W>>,
-    counter: AddrType,
+    edges: Vec<Edge<V,D,W>>,
+    //vertices: HashSet<Rc<Vertex<V>>>,
+    vertices: HashSet<Rc<Vertex<V>>>,
 }
 
 impl<V: Node, D: EdgeDirection, W: EdgeWeight> Graph<V,D,W> {
     pub fn new() -> Self {
         Graph {
-            addresses: HashMap::new(),
             edges: Vec::new(),
-            counter: 0
+            vertices: HashSet::new(),
         }
     }
     /// A vertex can be added to any graph, regarrdless of edge weighted-ness or directed-ness
-    pub fn add_vertex(&mut self, val: V) {
-        let addr = Addr(self.counter);
-        self.counter += 1;
-        let vertex = Vertex::from(val, addr);
-        self.addresses.insert(addr, vertex);
+    pub fn add_vertex(&mut self, val: V) -> &Vertex<V> {
+        let vertex = Vertex::from(val);
+        let rc = Rc::new(vertex);
+        self.vertices.insert(rc.clone());
+        self.vertices.get(&rc).unwrap()
     }
 
+    pub fn contains_vertex(&self, val: &V) -> bool {
+        //self.vertices.get(val)
+        false
+    }
 }
 
 // ******************************************************************
 // **********          Unweighted                          **********
 // ******************************************************************
 impl<V: Node, D: EdgeDirection> Graph<V, D, UnweightedEdge> {
-    pub fn add_edge(&mut self, lhs: &V, rhs: &V) {
-        // if lhs or rhs are absent...
-        //  panic?
-        //  add them?
-        //  return None or something?
-        //let left = self.
+    // returns edge reference or None if nothing was added (invalid input)
+    // inputs must have `self` lifetime, so they're valid unless deleted
+    // can't just take V as input: would need to create Vertex<&V> :/
+    pub fn add_edge<'a>(&'a mut self, l: &'a Vertex<V>, r: &'a Vertex<V>) 
+        -> Option<&'a Edge<V,D,UnweightedEdge>> {
+        let lhs = self.vertices.get(l)?;
+        let rhs = self.vertices.get(r)?;
+        let edge = Edge::between(lhs.clone(), rhs.clone());
+        self.edges.push(edge);
+        self.edges.last() // uhh this part should never be none
     }
 }
 

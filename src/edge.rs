@@ -2,8 +2,10 @@
 //  make edge weights generic? anything that can be added/compared or something?
 
 use std::fmt;
+use std::rc::Rc;
+use vertex::{Vertex, Node};
 
-use Addr;
+//use Addr;
 
 
 // ********************************************************
@@ -40,23 +42,25 @@ impl EdgeWeight for WeightedEdge {
 // ********************************************************
 
 #[derive(Debug)]
-pub struct Edge<D: EdgeDirection, W: EdgeWeight> {
+pub struct Edge<N: Node, D: EdgeDirection, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
     weight: W,
-    left: Addr,
-    right: Addr,
+    //left: Addr,
+    //right: Addr,
+    lhs: Rc<Vertex<N>>,
+    rhs: Rc<Vertex<N>>,
 }
 
 // ********************************************************
 // **********          Unweighted Edge           **********
 // ********************************************************
-impl<D: EdgeDirection> Edge<D, UnweightedEdge> {
-    fn from(left: Addr, right: Addr) -> Self {
+impl<N: Node, D: EdgeDirection> Edge<N, D, UnweightedEdge> {
+    pub(crate) fn between(lhs: Rc<Vertex<N>>, rhs: Rc<Vertex<N>>) -> Self {
         Edge {
             dir: D::default(),
             weight: UnweightedEdge,
-            left, right
+            lhs, rhs
         }
     }
 }
