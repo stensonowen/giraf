@@ -3,23 +3,24 @@
 
 use std::fmt;
 use vertex::{Vertex, Node};
-use vertex::{VertexDirection, DirectedVertex, UndirectedVertex};
+use vertex::{VertexDir, DirectedVertex, UndirectedVertex};
+use addr_hm::Addr;
 
 
 // ********************************************************
 // **********          Edge Directions           **********
 // ********************************************************
 
-pub trait EdgeDir<V: Node, W: EdgeWeight>: fmt::Debug + Default {
-    type VertexPair: VertexDirection<V, W>;
+pub trait EdgeDir<W: EdgeWeight>: fmt::Debug + Default {
+    type VertexPair: VertexDir<W, EdgePair=Self>;
 }
 #[derive(Debug, Default)] pub struct DirectedEdge;
 #[derive(Debug, Default)] pub struct UndirectedEdge;
-impl<V: Node, W: EdgeWeight> EdgeDir<V, W> for DirectedEdge {
-    type VertexPair = DirectedVertex<V,W>;
+impl<W: EdgeWeight> EdgeDir<W> for DirectedEdge {
+    type VertexPair = DirectedVertex<W>;
 }
-impl<V: Node, W: EdgeWeight> EdgeDir<V, W> for UndirectedEdge {
-    type VertexPair = UndirectedVertex<V,W>;
+impl<W: EdgeWeight> EdgeDir<W> for UndirectedEdge {
+    type VertexPair = UndirectedVertex<W>;
 }
 
 
@@ -55,20 +56,20 @@ impl EdgeWeight for SignedEdge {
 // **********          Edge                      **********
 // ********************************************************
 
-#[derive(Debug)]
-pub struct Edge<N: Node, D: EdgeDir<N,W>, W: EdgeWeight> {
+#[derive(Debug, Clone)]
+pub struct Edge<D: EdgeDir<W>, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
     weight: W,
-    lhs: Vertex<N,D,W>,
-    rhs: Vertex<N,D,W>,
+    lhs: Addr,
+    rhs: Addr,
 }
 
 // ********************************************************
 // **********          Edge                      **********
 // ********************************************************
-impl<N: Node, D: EdgeDir<N,W>, W: EdgeWeight> Edge<N, D, W> {
-    pub fn between(l: Vertex<N,D,W>, r: Vertex<N,D,W>, w: W::Weight) -> Self {
+impl<D: EdgeDir<W>, W: EdgeWeight> Edge<D, W> {
+    pub(crate) fn between(l: Addr, r: Addr, w: W::Weight) -> Self {
         Edge {
             dir: D::default(),
             weight: W::new(w),
@@ -81,7 +82,7 @@ impl<N: Node, D: EdgeDir<N,W>, W: EdgeWeight> Edge<N, D, W> {
 // ********************************************************
 // **********          Unweighted Edge           **********
 // ********************************************************
-impl<N: Node, D: EdgeDir<N,UnweightedEdge>> Edge<N, D, UnweightedEdge> {
+impl<D: EdgeDir<UnweightedEdge>> Edge<D, UnweightedEdge> {
     /*
     pub(crate) fn between(lhs: Vertex<N>, rhs: Vertex<N>) -> Self {
         Edge {
@@ -96,15 +97,15 @@ impl<N: Node, D: EdgeDir<N,UnweightedEdge>> Edge<N, D, UnweightedEdge> {
 // ********************************************************
 // **********          Edge with Unsigned Weights**********
 // ********************************************************
-impl<N: Node, D: EdgeDir<N,UnsignedEdge>> Edge<N, D, UnsignedEdge> {
+impl<D: EdgeDir<UnsignedEdge>> Edge<D, UnsignedEdge> {
     //pub(crate) fn between_(lhs: Vertex<N>, rhs: Vertex<N>) -> Self { }
 }
 
 // ********************************************************
 // **********          Undirected Edge           **********
 // ********************************************************
-impl<N: Node, W: EdgeWeight> Edge<N, UndirectedEdge, W> {
-    pub(crate) fn get_ends(&self) -> [&Vertex<N,UndirectedEdge,W>;2] {
+impl<W: EdgeWeight> Edge<UndirectedEdge, W> {
+    pub(crate) fn get_ends(&self) -> [&Addr;2] {
         [&self.lhs, &self.rhs]
     }
 
@@ -113,11 +114,12 @@ impl<N: Node, W: EdgeWeight> Edge<N, UndirectedEdge, W> {
 // ********************************************************
 // **********          Directed Edge             **********
 // ********************************************************
-impl<N: Node, W: EdgeWeight> Edge<N, DirectedEdge, W> {
-    pub(crate) fn get_src(&self) -> &Vertex<N, DirectedEdge, W> {
+impl<W: EdgeWeight> Edge<DirectedEdge, W> {
+    pub(crate) fn get_src(&self) -> &Addr {
         &self.lhs
     }
-    pub(crate) fn get_dst(&self) -> &Vertex<N, DirectedEdge, W> {
+    pub(crate) fn get_dst(&self) -> &Addr {
         &self.rhs
     }
 }
+

@@ -16,7 +16,7 @@ mod addr_hm;
 use addr_hm::{Addr, AddrSet};
 
 #[derive(Debug)]
-pub struct Graph<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
+pub struct Graph<V: Node, D: EdgeDir<W>, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
 
@@ -29,7 +29,7 @@ pub struct Graph<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
 
 }
 
-impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Graph<V,D,W> {
+impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Graph<V,D,W> {
     pub fn new() -> Self {
         Graph {
             //edges: Vec::new(),
@@ -38,15 +38,15 @@ impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Graph<V,D,W> {
             nodes: AddrSet::default()
         }
     }
-    /*
     /// A vertex can be added to any graph, 
     /// regardless of edge weighted-ness or directed-ness
     pub fn add_vertex(&mut self, val: V) -> &Vertex<V,D,W> {
         let vertex = Vertex::new(val);
-        self.nodes.insert(vertex.clone());
-        self.nodes.get(&vertex).unwrap()
+        //self.nodes.insert(vertex.clone());
+        //self.nodes.get(&vertex).unwrap()
+        let addr = self.nodes.insert(vertex).unwrap();
+        &self.nodes[addr]
     }
-    */
 
     pub fn contains_value(&self, val: &V) -> bool {
         self.nodes.contains(val)
@@ -59,7 +59,7 @@ impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Graph<V,D,W> {
 // ******************************************************************
 // **********          Unweighted                          **********
 // ******************************************************************
-impl<V: Node, D: EdgeDir<V,UnweightedEdge>> Graph<V, D, UnweightedEdge> {
+impl<V: Node, D: EdgeDir<UnweightedEdge>> Graph<V, D, UnweightedEdge> {
     // returns edge reference or None if nothing was added (invalid input)
     // inputs must have `self` lifetime, so they're valid unless deleted
     // can't just take V as input: would need to create Vertex<&V> :/
@@ -67,12 +67,15 @@ impl<V: Node, D: EdgeDir<V,UnweightedEdge>> Graph<V, D, UnweightedEdge> {
     pub fn add_edge<'a>(&'a mut self, 
                         l: &'a Vertex<V, D, UnweightedEdge>, 
                         r: &'a Vertex<V, D, UnweightedEdge>) 
-                        -> Option<&'a Edge<V,D,UnweightedEdge>> {
+                        -> Option<&'a Edge<D, UnweightedEdge>> {
         let lhs = self.nodes.get(l)?;
         let rhs = self.nodes.get(r)?;
-        let edge = Edge::between(lhs.clone(), rhs.clone(), ());
-        self.edges.push(edge);
-        self.edges.last() // uhh this part should never be none
+        let edge = Edge::between(lhs, rhs, ());
+        self.nodes[lhs].register_child_edge(edge);
+        //self.nodes[rhs].register_parent_edge(edge);
+        //self.edges.push(edge);
+        //self.edges.last() // uhh this part should never be none
+        None
     }
     */
 }
