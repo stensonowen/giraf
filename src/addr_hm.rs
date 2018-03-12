@@ -16,11 +16,9 @@
 //!   it just can't actually remove it from memory.
 //!  Even so. Cool stuff.
 
-#![allow(unused)]
+//#[cfg(sig, debug_assertions)]
 
-
-
-fn main() {}
+extern crate rand;
 
 use std::fmt;
 use std::ops::{Index, IndexMut};
@@ -28,35 +26,49 @@ use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::marker::PhantomData;
+use std::vec;
+
+use vertex::Node;
 
 const RESIZE_THRESHOLD: f64 = 1.5;
-const RESIZE_FACTOR: f64 = 1.5;
+const RESIZE_FACTOR: f64 = 2.0;
 const MAX_BUCKET_SIZE: usize = 32;
 const DEFAULT_TABLE_CAPACITY: usize = 32;
 const DEFAULT_BUCKET_CAPACITY: usize = 4;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Addr {
     table: usize,
     bucket: usize,
     #[cfg(debug_assertions)] sig: Signature,
 }
 
+impl Addr {
+    #[cfg(debug_assertions)]
+    fn from(table: usize, bucket: usize, sig: Signature) -> Self {
+        Addr { table, bucket, sig, }
+    }
+    #[cfg(not(debug_assertions))]
+    fn from(table: usize, bucket: usize) -> Self {
+        Addr { table, bucket, }
+    }
+}
+
+
 #[cfg(debug_assertions)]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 struct Signature(usize);
 
 #[cfg(debug_assertions)]
 impl Signature {
     fn random() -> Self {
-        // TODO
-        Signature(4) //chosen by fair dice roll
+        Signature(rand::random())
     }
 }
 
 
 #[derive(Debug)]
-pub(crate) struct AddrHashMap<T: fmt::Debug+Hash+Eq, H: Hasher + Default> {
+pub(crate) struct AddrHashMap<T: Node, H: Hasher + Default> {
     capacity: usize,
     size: usize,
     table: Box<[Vec<T>]>,
@@ -64,22 +76,22 @@ pub(crate) struct AddrHashMap<T: fmt::Debug+Hash+Eq, H: Hasher + Default> {
     #[cfg(debug_assertions)] sig: Signature,
 }
 
-impl<T: fmt::Debug+Hash+Eq> Default for AddrHashMap<T, DefaultHasher> {
+impl<T: Node> Default for AddrHashMap<T, DefaultHasher> {
     fn default() -> Self {
         AddrHashMap::with_capacity(DEFAULT_TABLE_CAPACITY)
     }
 }
 
-impl<T: fmt::Debug+Hash+Eq> AddrHashMap<T, DefaultHasher> {
+impl<T: Node> AddrHashMap<T, DefaultHasher> {
     pub(crate) fn with_capacity(c: usize) -> Self {
-        Self::with_capacity_and_hasher(c, DefaultHasher::new())
+        Self::with_capacity_and_hasher(c)
     }
 
 }
 
-impl<T: fmt::Debug+Hash+Eq, H: Hasher+Default> AddrHashMap<T, H> {
+impl<T: Node, H: Hasher+Default> AddrHashMap<T, H> {
     /// Create new `AddrHashMap` with specified capacity and hasher
-    pub(crate) fn with_capacity_and_hasher(c: usize, h: H) -> Self {
+    pub(crate) fn with_capacity_and_hasher(c: usize) -> Self {
         // better way?
         let v: Vec<Vec<T>> = (0..c).map(|_| vec![]).collect();
         AddrHashMap {
@@ -94,8 +106,24 @@ impl<T: fmt::Debug+Hash+Eq, H: Hasher+Default> AddrHashMap<T, H> {
     /// Return a translation map of old `Addr`s to new ones
     // TODO do not copy over "deleted" elements?
     pub(crate) fn from_old(old: Self) -> (Self, HashMap<Addr,Addr>) {
-        unimplemented!()
+        let new_cap = (old.capacity() as f64 * RESIZE_FACTOR) as usize;
+        let mut replacements = HashMap::with_capacity(old.len());
+        let mut new = Self::with_capacity_and_hasher(new_cap);
+
+        for (val, old_addr) in old.into_iter_1() {
+            // TODO will this ever panic? maybe if a bucket overflows?
+            // If new_cap is twice old_cap, every bucket should be no fuller
+            // I think
+            let new_addr = new.insert(val).unwrap();
+            replacements.insert(old_addr, new_addr);
+        }
+
+        (new, replacements)
     }
+
+    pub(crate) fn len(&self) -> usize { self.size }
+    pub(crate) fn is_empty(&self) -> bool { self.size == 0 }
+    pub(crate) fn capacity(&self) -> usize { self.capacity }
 
     fn hash(val: &T) -> usize {
         let mut hasher = H::default();
@@ -117,6 +145,7 @@ impl<T: fmt::Debug+Hash+Eq, H: Hasher+Default> AddrHashMap<T, H> {
             return None;
         }
         bucket.push(val);
+        //Some(Addr::from(table_index, bucket_index, #[cfg(debug_assertions)] self.sig))
         Some(Addr {
             table: table_index,
             bucket: bucket_index,
@@ -140,9 +169,65 @@ impl<T: fmt::Debug+Hash+Eq, H: Hasher+Default> AddrHashMap<T, H> {
         }
         None
     }
+
+    pub(crate) fn iter<'a>(&'a self) -> Box<Iterator<Item=(&'a T, Addr)>+'a> {
+        let iter = self.table.iter().enumerate()
+            .flat_map(move |(t_i, bucket)|
+                      bucket.iter()
+                      .enumerate()
+                      .map(move |(b_i, t)| 
+                           (t, Addr {
+                               table: t_i,
+                               bucket: b_i,
+                               #[cfg(debug_assertions)] sig: self.sig,
+                           }))
+                      );
+        Box::new(iter)
+    }
+
+    pub(crate) fn into_iter_1(self) -> vec::IntoIter<(T,Addr)> {
+        // Note: this collects to a Vec first
+        #[cfg(debug_assertions)] let sig = self.sig;
+        let table: Vec<Vec<T>> = self.table.into();
+        let elems: Vec<(T,Addr)> = table.into_iter().enumerate()
+            .flat_map(|(t_i, bucket)| 
+                      bucket.into_iter()
+                      .enumerate()
+                      .map(move |(b_i, t)|
+                           (t, Addr {
+                               table: t_i, 
+                               bucket: b_i,
+                               #[cfg(debug_assertions)] sig,
+                           }))
+                      )
+            .collect();
+        elems.into_iter()
+    }
+
 }
 
-impl<T: fmt::Debug+Hash+Eq, H: Hasher+Default> Index<Addr> for AddrHashMap<T, H> {
+impl<T: 'static + Node, H: Hasher+Default> AddrHashMap<T, H> {
+    // uhhh what does it mean for a type to have a lifetime?
+    // will this make things inconvenient or something?
+    pub(crate) fn into_iter_2(self) -> Box<Iterator<Item=(T,Addr)>> {
+        #[cfg(debug_assertions)] let sig = self.sig;
+        let table: Vec<Vec<T>> = self.table.into();
+        let iter = table.into_iter().enumerate()
+            .flat_map(move |(t_i, bucket)|
+                      bucket.into_iter()
+                      .enumerate()
+                      .map(move |(b_i, t)|
+                           (t, Addr {
+                               table: t_i,
+                               bucket: b_i,
+                               #[cfg(debug_assertions)] sig,
+                           }))
+                      );
+        Box::new(iter)
+    }
+}
+
+impl<T: Node, H: Hasher+Default> Index<Addr> for AddrHashMap<T, H> {
     type Output = T;
     fn index(&self, addr: Addr) -> &T {
         debug_assert_eq!(self.sig, addr.sig);
@@ -151,7 +236,7 @@ impl<T: fmt::Debug+Hash+Eq, H: Hasher+Default> Index<Addr> for AddrHashMap<T, H>
     }
 }
 
-impl<T: fmt::Debug+Hash+Eq, H: Hasher+Default> IndexMut<Addr> for AddrHashMap<T, H> {
+impl<T: Node, H: Hasher+Default> IndexMut<Addr> for AddrHashMap<T, H> {
     fn index_mut(&mut self, addr: Addr) -> &mut T {
         debug_assert_eq!(self.sig, addr.sig);
         let bucket = &mut self.table[addr.table];

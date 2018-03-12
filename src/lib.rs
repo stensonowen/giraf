@@ -12,6 +12,7 @@ use edge::{EdgeWeight, SignedEdge, UnsignedEdge, UnweightedEdge};
 mod vertex;
 use vertex::{Vertex, Node};
 
+mod addr_hm;
 
 #[derive(Debug)]
 pub struct Graph<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
