@@ -13,6 +13,7 @@ mod vertex;
 use vertex::{Vertex, Node};
 
 mod addr_hm;
+use addr_hm::{Addr, AddrSet};
 
 #[derive(Debug)]
 pub struct Graph<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
@@ -23,7 +24,9 @@ pub struct Graph<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> {
     //vertices: HashSet<Vertex<V,D,W>>,
 
     //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
-    nodes: HashSet<Vertex<V,D,W>>,
+    //nodes: HashSet<Vertex<V,D,W>>,
+    nodes: AddrSet<Vertex<V,D,W>>,
+
 }
 
 impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Graph<V,D,W> {
@@ -31,15 +34,19 @@ impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Graph<V,D,W> {
         Graph {
             //edges: Vec::new(),
             //vertices: HashSet::new(),
-            nodes: HashSet::new(),
+            //nodes: HashSet::new(),
+            nodes: AddrSet::default()
         }
     }
-    /// A vertex can be added to any graph, regarrdless of edge weighted-ness or directed-ness
+    /*
+    /// A vertex can be added to any graph, 
+    /// regardless of edge weighted-ness or directed-ness
     pub fn add_vertex(&mut self, val: V) -> &Vertex<V,D,W> {
         let vertex = Vertex::new(val);
         self.nodes.insert(vertex.clone());
         self.nodes.get(&vertex).unwrap()
     }
+    */
 
     pub fn contains_value(&self, val: &V) -> bool {
         self.nodes.contains(val)
@@ -98,6 +105,7 @@ impl<V: Node> Graph<V, DirectedEdge, UnweightedEdge> {
     // returns edge reference or None if nothing was added (invalid input)
     // inputs must have `self` lifetime, so they're valid unless deleted
     // could just take &V as input... would that be better?
+    /*
     pub fn add_edge<'a>(&'a mut self, 
                         l: &'a Vertex<V, DirectedEdge, UnweightedEdge>, 
                         r: &'a Vertex<V, DirectedEdge, UnweightedEdge>) 
@@ -110,6 +118,7 @@ impl<V: Node> Graph<V, DirectedEdge, UnweightedEdge> {
         //self.edges.push(edge);
         None
     }
+    */
 }
 
 // ******************************************************************

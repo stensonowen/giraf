@@ -21,6 +21,7 @@
 extern crate rand;
 
 use std::fmt;
+use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
@@ -66,9 +67,10 @@ impl Signature {
     }
 }
 
+pub(crate) type AddrSet<T> = AddrHashSet<T, DefaultHasher>;
 
 #[derive(Debug)]
-pub(crate) struct AddrHashMap<T: Node, H: Hasher + Default> {
+pub(crate) struct AddrHashSet<T: Node, H: Hasher + Default> {
     capacity: usize,
     size: usize,
     table: Box<[Vec<T>]>,
@@ -76,25 +78,25 @@ pub(crate) struct AddrHashMap<T: Node, H: Hasher + Default> {
     #[cfg(debug_assertions)] sig: Signature,
 }
 
-impl<T: Node> Default for AddrHashMap<T, DefaultHasher> {
+impl<T: Node> Default for AddrHashSet<T, DefaultHasher> {
     fn default() -> Self {
-        AddrHashMap::with_capacity(DEFAULT_TABLE_CAPACITY)
+        AddrHashSet::with_capacity(DEFAULT_TABLE_CAPACITY)
     }
 }
 
-impl<T: Node> AddrHashMap<T, DefaultHasher> {
+impl<T: Node> AddrHashSet<T, DefaultHasher> {
     pub(crate) fn with_capacity(c: usize) -> Self {
         Self::with_capacity_and_hasher(c)
     }
 
 }
 
-impl<T: Node, H: Hasher+Default> AddrHashMap<T, H> {
-    /// Create new `AddrHashMap` with specified capacity and hasher
+impl<T: Node, H: Hasher+Default> AddrHashSet<T, H> {
+    /// Create new `AddrHashSet` with specified capacity and hasher
     pub(crate) fn with_capacity_and_hasher(c: usize) -> Self {
         // better way?
         let v: Vec<Vec<T>> = (0..c).map(|_| vec![]).collect();
-        AddrHashMap {
+        AddrHashSet {
             size: 0,
             capacity: DEFAULT_TABLE_CAPACITY,
             table: v.into_boxed_slice(),
@@ -102,7 +104,7 @@ impl<T: Node, H: Hasher+Default> AddrHashMap<T, H> {
             #[cfg(debug_assertions)] sig: Signature::random(),
         }
     }
-    /// Create a new, larger `AddrHashMap` and copy the data over
+    /// Create a new, larger `AddrHashSet` and copy the data over
     /// Return a translation map of old `Addr`s to new ones
     // TODO do not copy over "deleted" elements?
     pub(crate) fn from_old(old: Self) -> (Self, HashMap<Addr,Addr>) {
@@ -125,7 +127,7 @@ impl<T: Node, H: Hasher+Default> AddrHashMap<T, H> {
     pub(crate) fn is_empty(&self) -> bool { self.size == 0 }
     pub(crate) fn capacity(&self) -> usize { self.capacity }
 
-    fn hash(val: &T) -> usize {
+    fn hash<S: Hash>(val: &S) -> usize {
         let mut hasher = H::default();
         val.hash(&mut hasher);
         hasher.finish() as usize
@@ -153,6 +155,7 @@ impl<T: Node, H: Hasher+Default> AddrHashMap<T, H> {
         })
     }
 
+    /*
     /// Locates an element by its reference or returns `None` if it's absent
     pub(crate) fn get(&self, val: &T) -> Option<Addr> {
         let hash = Self::hash(&val);
@@ -169,6 +172,14 @@ impl<T: Node, H: Hasher+Default> AddrHashMap<T, H> {
         }
         None
     }
+    */
+
+    /*
+    pub(crate) fn contains_key(&self, val: &T) -> bool {
+        let table_index = Self::hash(&val) % self.capacity;
+        &self.table[table_index].iter().any(|elem| elem == val)
+    }
+    */
 
     pub(crate) fn iter<'a>(&'a self) -> Box<Iterator<Item=(&'a T, Addr)>+'a> {
         let iter = self.table.iter().enumerate()
@@ -206,7 +217,7 @@ impl<T: Node, H: Hasher+Default> AddrHashMap<T, H> {
 
 }
 
-impl<T: 'static + Node, H: Hasher+Default> AddrHashMap<T, H> {
+impl<T: 'static + Node, H: Hasher+Default> AddrHashSet<T, H> {
     // uhhh what does it mean for a type to have a lifetime?
     // will this make things inconvenient or something?
     pub(crate) fn into_iter_2(self) -> Box<Iterator<Item=(T,Addr)>> {
@@ -227,7 +238,31 @@ impl<T: 'static + Node, H: Hasher+Default> AddrHashMap<T, H> {
     }
 }
 
-impl<T: Node, H: Hasher+Default> Index<Addr> for AddrHashMap<T, H> {
+impl<T: Node, H: Hasher+Default> AddrHashSet<T, H> {
+    pub(crate) fn contains<Q: Hash+Eq>(&self, val: &Q) -> bool
+        where T: Borrow<Q>
+    {
+        let table_index = Self::hash(val) % self.capacity;
+        self.table[table_index].iter().any(|e| e.borrow() == val)
+    }
+
+    /// Locates an element by its reference or returns `None` if it's absent
+    pub(crate) fn get<Q: Hash+Eq>(&self, val: &Q) -> Option<Addr> 
+        where T: Borrow<Q>
+    {
+        let table_index = Self::hash(val) % self.capacity;
+        self.table[table_index].iter()
+            .enumerate()
+            .find(|&(_, elem)| elem.borrow() == val)
+            .map(|(b_i, elem)| Addr {
+                table: table_index,
+                bucket: b_i,
+                #[cfg(debug_assertions)] sig: self.sig,
+            })
+    }
+}
+
+impl<T: Node, H: Hasher+Default> Index<Addr> for AddrHashSet<T, H> {
     type Output = T;
     fn index(&self, addr: Addr) -> &T {
         debug_assert_eq!(self.sig, addr.sig);
@@ -236,7 +271,7 @@ impl<T: Node, H: Hasher+Default> Index<Addr> for AddrHashMap<T, H> {
     }
 }
 
-impl<T: Node, H: Hasher+Default> IndexMut<Addr> for AddrHashMap<T, H> {
+impl<T: Node, H: Hasher+Default> IndexMut<Addr> for AddrHashSet<T, H> {
     fn index_mut(&mut self, addr: Addr) -> &mut T {
         debug_assert_eq!(self.sig, addr.sig);
         let bucket = &mut self.table[addr.table];

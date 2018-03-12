@@ -123,4 +123,5 @@ impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Hash for Vertex<V,D,W> {
         self.0.val.hash(state);
     }
 }
+impl<V: Node, D: EdgeDir<V,W>, W: EdgeWeight> Node for Vertex<V,D,W> { }
 

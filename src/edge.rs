@@ -2,7 +2,6 @@
 //  make edge weights generic? anything that can be added/compared or something?
 
 use std::fmt;
-use std::rc::Rc;
 use vertex::{Vertex, Node};
 use vertex::{VertexDirection, DirectedVertex, UndirectedVertex};
 
