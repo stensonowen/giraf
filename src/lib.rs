@@ -10,13 +10,13 @@ use edge::{EdgeDir, DirectedEdge, UndirectedEdge};
 use edge::{EdgeWeight, SignedEdge, UnsignedEdge, UnweightedEdge};
 
 mod vertex;
-use vertex::{Vertex, Node};
+use vertex::{Vertex, NodeT};
 
 mod addr_hm;
 use addr_hm::{Addr, AddrSet};
 
 #[derive(Debug)]
-pub struct Graph<V: Node, D: EdgeDir<W>, W: EdgeWeight> {
+pub struct Graph<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
 
@@ -26,10 +26,12 @@ pub struct Graph<V: Node, D: EdgeDir<W>, W: EdgeWeight> {
     //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
     //nodes: HashSet<Vertex<V,D,W>>,
     nodes: AddrSet<Vertex<V,D,W>>,
+    edges: AddrSet<Edge<D,W>>,
 
 }
 
-impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Graph<V,D,W> {
+/*
+impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Graph<V,D,W> {
     pub fn new() -> Self {
         Graph {
             //edges: Vec::new(),
@@ -59,7 +61,7 @@ impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Graph<V,D,W> {
 // ******************************************************************
 // **********          Unweighted                          **********
 // ******************************************************************
-impl<V: Node, D: EdgeDir<UnweightedEdge>> Graph<V, D, UnweightedEdge> {
+impl<V: NodeT, D: EdgeDir<UnweightedEdge>> Graph<V, D, UnweightedEdge> {
     // returns edge reference or None if nothing was added (invalid input)
     // inputs must have `self` lifetime, so they're valid unless deleted
     // can't just take V as input: would need to create Vertex<&V> :/
@@ -84,7 +86,7 @@ impl<V: Node, D: EdgeDir<UnweightedEdge>> Graph<V, D, UnweightedEdge> {
 // ******************************************************************
 // **********          Undirected                          **********
 // ******************************************************************
-impl<V: Node, W: EdgeWeight> Graph<V, UndirectedEdge, W> {
+impl<V: NodeT, W: EdgeWeight> Graph<V, UndirectedEdge, W> {
 
 }
 
@@ -92,7 +94,7 @@ impl<V: Node, W: EdgeWeight> Graph<V, UndirectedEdge, W> {
 // **********          Undirected, Unweighted              **********
 // ******************************************************************
 
-impl<V: Node> Graph<V, UndirectedEdge, UnweightedEdge> {
+impl<V: NodeT> Graph<V, UndirectedEdge, UnweightedEdge> {
     pub fn new_undirected_unweighted() -> Self {
         Self::new()
     }
@@ -101,7 +103,7 @@ impl<V: Node> Graph<V, UndirectedEdge, UnweightedEdge> {
 // ******************************************************************
 // **********          Directed, Unweighted                **********
 // ******************************************************************
-impl<V: Node> Graph<V, DirectedEdge, UnweightedEdge> {
+impl<V: NodeT> Graph<V, DirectedEdge, UnweightedEdge> {
     pub fn new_directed_unweighted() -> Self {
         Self::new()
     }
@@ -127,7 +129,7 @@ impl<V: Node> Graph<V, DirectedEdge, UnweightedEdge> {
 // ******************************************************************
 // **********          Directed, Unsigned Weights          **********
 // ******************************************************************
-impl<V: Node> Graph<V, DirectedEdge, UnsignedEdge> {
+impl<V: NodeT> Graph<V, DirectedEdge, UnsignedEdge> {
     pub fn new_directed_weighted() -> Self {
         Self::new()
     }
@@ -135,7 +137,7 @@ impl<V: Node> Graph<V, DirectedEdge, UnsignedEdge> {
 // ******************************************************************
 // **********          Directed, Signed Weights            **********
 // ******************************************************************
-impl<V: Node> Graph<V, DirectedEdge, SignedEdge> {
+impl<V: NodeT> Graph<V, DirectedEdge, SignedEdge> {
     pub fn new_directed_weighted_signed() -> Self {
         Self::new()
     }
@@ -144,7 +146,7 @@ impl<V: Node> Graph<V, DirectedEdge, SignedEdge> {
 // ******************************************************************
 // **********          Undirected, Unsigned Weights        **********
 // ******************************************************************
-impl<V: Node> Graph<V, UndirectedEdge, UnsignedEdge> {
+impl<V: NodeT> Graph<V, UndirectedEdge, UnsignedEdge> {
     pub fn new_undirected_weighted() -> Self {
         Self::new()
     }
@@ -153,11 +155,12 @@ impl<V: Node> Graph<V, UndirectedEdge, UnsignedEdge> {
 // ******************************************************************
 // **********          Undirected, Signed Weights          **********
 // ******************************************************************
-impl<V: Node> Graph<V, UndirectedEdge, SignedEdge> {
+impl<V: NodeT> Graph<V, UndirectedEdge, SignedEdge> {
     pub fn new_undirected_weighted_signed() -> Self {
         Self::new()
     }
 }
+*/
 
 
 // hmmmm
@@ -166,3 +169,4 @@ impl<V: Node> Graph<V, UndirectedEdge, SignedEdge> {
 //  dude i don't fucken know it's too late
 // todo
 //  unify letters used for Vertex data (T/V/N)
+

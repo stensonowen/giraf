@@ -2,7 +2,9 @@
 //  make edge weights generic? anything that can be added/compared or something?
 
 use std::fmt;
-use vertex::{Vertex, Node};
+use std::hash::Hash;
+
+use vertex::{Vertex, NodeT};
 use vertex::{VertexDir, DirectedVertex, UndirectedVertex};
 use addr_hm::Addr;
 
@@ -11,11 +13,11 @@ use addr_hm::Addr;
 // **********          Edge Directions           **********
 // ********************************************************
 
-pub trait EdgeDir<W: EdgeWeight>: fmt::Debug + Default {
+pub trait EdgeDir<W: EdgeWeight>: fmt::Debug + Default + Eq + Hash {
     type VertexPair: VertexDir<W, EdgePair=Self>;
 }
-#[derive(Debug, Default)] pub struct DirectedEdge;
-#[derive(Debug, Default)] pub struct UndirectedEdge;
+#[derive(Debug, Default, PartialEq, Eq, Hash)] pub struct DirectedEdge;
+#[derive(Debug, Default, PartialEq, Eq, Hash)] pub struct UndirectedEdge;
 impl<W: EdgeWeight> EdgeDir<W> for DirectedEdge {
     type VertexPair = DirectedVertex<W>;
 }
@@ -28,27 +30,15 @@ impl<W: EdgeWeight> EdgeDir<W> for UndirectedEdge {
 // **********          Edge Weights              **********
 // ********************************************************
 
-pub trait EdgeWeight: fmt::Debug {
-    type Weight;
-    fn new(w: Self::Weight) -> Self;
-}
+pub trait EdgeWeight: fmt::Debug + Hash + Eq { }
 
-#[derive(Debug)] pub struct UnweightedEdge;
-#[derive(Debug)] pub struct UnsignedEdge(u32);
-#[derive(Debug)] pub struct SignedEdge(i32);
+#[derive(Debug, Hash, PartialEq, Eq)] pub struct UnweightedEdge;
+#[derive(Debug, Hash, PartialEq, Eq)] pub struct UnsignedEdge(u32);
+#[derive(Debug, Hash, PartialEq, Eq)] pub struct SignedEdge(i32);
 
-impl EdgeWeight for UnweightedEdge {
-    type Weight = ();
-    fn new(_: ()) -> Self { UnweightedEdge }
-}
-impl EdgeWeight for UnsignedEdge {
-    type Weight = u32;
-    fn new(u: u32) -> Self { UnsignedEdge(u) }
-}
-impl EdgeWeight for SignedEdge {
-    type Weight = i32;
-    fn new(i: i32) -> Self { SignedEdge(i) }
-}
+impl EdgeWeight for UnweightedEdge { }
+impl EdgeWeight for UnsignedEdge { }
+impl EdgeWeight for SignedEdge { }
 
 
 
@@ -56,7 +46,7 @@ impl EdgeWeight for SignedEdge {
 // **********          Edge                      **********
 // ********************************************************
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Edge<D: EdgeDir<W>, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
@@ -65,6 +55,8 @@ pub struct Edge<D: EdgeDir<W>, W: EdgeWeight> {
     rhs: Addr,
 }
 
+
+/*
 // ********************************************************
 // **********          Edge                      **********
 // ********************************************************
@@ -123,3 +115,4 @@ impl<W: EdgeWeight> Edge<DirectedEdge, W> {
     }
 }
 
+*/

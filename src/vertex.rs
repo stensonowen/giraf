@@ -5,51 +5,62 @@ use edge::{Edge,};
 use edge::{EdgeWeight};
 use edge::{EdgeDir, DirectedEdge, UndirectedEdge};
 
+use addr_hm::Addr;
+
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 
-pub trait Node: fmt::Debug + Eq + Hash {}
+pub trait NodeT: fmt::Debug + Eq + Hash {}
 
 pub trait VertexDir<W: EdgeWeight>: fmt::Debug + Default {
     type EdgePair: EdgeDir<W, VertexPair=Self>;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>>;
-    fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>);
-    fn register_child(&mut self, edge: Edge<Self::EdgePair,W>);
+    //fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>);
+    //fn register_child(&mut self, edge: Edge<Self::EdgePair,W>);
 }
 #[derive(Debug)] 
 pub struct DirectedVertex<W: EdgeWeight> {
-    parents: Vec<Edge<DirectedEdge, W>>,
-    children: Vec<Edge<DirectedEdge, W>>,
+    //parents: Vec<Edge<DirectedEdge, W>>,
+    //children: Vec<Edge<DirectedEdge, W>>,
+    parents: Vec<Addr>,
+    children: Vec<Addr>,
+    _x: PhantomData<W>,
 }
 #[derive(Debug)] 
 pub struct UndirectedVertex<W: EdgeWeight> {
-    neighbors: Vec<Edge<UndirectedEdge, W>>,
+    //neighbors: Vec<Edge<UndirectedEdge, W>>,
+    neighbors: Vec<Addr>,
+    _x: PhantomData<W>,
 }
 impl<W: EdgeWeight> VertexDir<W> for DirectedVertex<W> {
     type EdgePair = DirectedEdge;
     //fn get_neighbors<'a>(&'a self) -> Box<Iterator<Item=&'a Vertex<V>>> {
         //self.parents.iter().map(Edge::get_src)
     //}
+    /*
     fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>) {
         self.parents.push(edge);
     }
     fn register_child(&mut self, edge: Edge<Self::EdgePair,W>) {
         self.children.push(edge);
     }
+    */
 }
 impl<W: EdgeWeight> VertexDir<W> for UndirectedVertex<W> {
     type EdgePair = UndirectedEdge;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>> {
         //unimplemented!()
     //}
+    /*
     fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>) {
         self.neighbors.push(edge);
     }
     fn register_child(&mut self, edge: Edge<Self::EdgePair,W>) {
         self.neighbors.push(edge);
     }
+    */
 }
 
 impl<W: EdgeWeight> Default for DirectedVertex<W> {
@@ -57,6 +68,7 @@ impl<W: EdgeWeight> Default for DirectedVertex<W> {
         DirectedVertex {
             parents: vec![],
             children: vec![],
+            _x: PhantomData,
         }
     }
 }
@@ -64,18 +76,20 @@ impl<W: EdgeWeight> Default for UndirectedVertex<W> {
     fn default() -> Self {
         UndirectedVertex {
             neighbors: vec![],
+            _x: PhantomData,
         }
     }
 }
 
 #[derive(Debug)] 
-pub struct Vertex<V: Node, D: EdgeDir<W>, W: EdgeWeight> {
+pub struct Vertex<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
     val: V,
     dir: <D as EdgeDir<W>>::VertexPair,
     _w: PhantomData<W>,
 }
 
-impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Vertex<V,D,W> {
+/*
+impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Vertex<V,D,W> {
     pub(crate) fn new(val: V) -> Self { 
         Vertex {
             val,
@@ -93,14 +107,14 @@ impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Vertex<V,D,W> {
 
 
 /*
-impl<V: Node, D, W: EdgeWeight, P> Vertex<V,D,W> 
+impl<V: NodeT, D, W: EdgeWeight, P> Vertex<V,D,W> 
     where D: EdgeDir<W, VertexPair=P>,
           P: VertexDir<W, EdgePair=D> 
 { }
 */
 
 
-impl<V: Node, W: EdgeWeight> Vertex<V, DirectedEdge, W> {
+impl<V: NodeT, W: EdgeWeight> Vertex<V, DirectedEdge, W> {
     /*
     fn register_parent(&mut self, edge: Edge<DirectedEdge, W>) {
         self.dir.parents.push(edge);
@@ -111,15 +125,16 @@ impl<V: Node, W: EdgeWeight> Vertex<V, DirectedEdge, W> {
     */
 }
 
-impl<V: Node, W: EdgeWeight> Vertex<V, UndirectedEdge, W> {
+impl<V: NodeT, W: EdgeWeight> Vertex<V, UndirectedEdge, W> {
     /*
     fn register_neighbor(&mut self, edge: Edge<UndirectedEdge, W>) {
         self.dir.neighbors.push(edge);
     }
     */
 }
+*/
 
-impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Borrow<V> for Vertex<V,D,W> {
+impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Borrow<V> for Vertex<V,D,W> {
     fn borrow(&self) -> &V {
         &self.val
     }
@@ -131,16 +146,16 @@ impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Borrow<V> for Vertex<V,D,W> {
 // Could this ever cause data corruption? I don't think so
 // Users can't add a second identical elem (it'll just replace the first)
 
-impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> PartialEq for Vertex<V,D,W> {
+impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> PartialEq for Vertex<V,D,W> {
     fn eq(&self, other: &Self) -> bool {
         self.val == other.val
     }
 }
-impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Eq for Vertex<V,D,W> { }
-impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Hash for Vertex<V,D,W> {
+impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Eq for Vertex<V,D,W> { }
+impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Hash for Vertex<V,D,W> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.val.hash(state);
     }
 }
-impl<V: Node, D: EdgeDir<W>, W: EdgeWeight> Node for Vertex<V,D,W> { }
+impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> NodeT for Vertex<V,D,W> { }
 

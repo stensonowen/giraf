@@ -20,7 +20,7 @@
 
 extern crate rand;
 
-use std::fmt;
+use std::fmt::Debug;
 use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 use std::hash::{Hash, Hasher};
@@ -29,7 +29,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::marker::PhantomData;
 use std::vec;
 
-use vertex::Node;
+//use vertex::NodeT;
 
 const RESIZE_THRESHOLD: f64 = 1.5;
 const RESIZE_FACTOR: f64 = 2.0;
@@ -41,6 +41,7 @@ const DEFAULT_BUCKET_CAPACITY: usize = 4;
 pub(crate) struct Addr {
     table: usize,
     bucket: usize,
+    //_kind: PhantomData,
     #[cfg(debug_assertions)] sig: Signature,
 }
 
@@ -70,7 +71,7 @@ impl Signature {
 pub(crate) type AddrSet<T> = AddrHashSet<T, DefaultHasher>;
 
 #[derive(Debug)]
-pub(crate) struct AddrHashSet<T: Node, H: Hasher + Default> {
+pub(crate) struct AddrHashSet<T: Debug+Eq+Hash, H: Hasher + Default> {
     capacity: usize,
     size: usize,
     table: Box<[Vec<T>]>,
@@ -78,20 +79,20 @@ pub(crate) struct AddrHashSet<T: Node, H: Hasher + Default> {
     #[cfg(debug_assertions)] sig: Signature,
 }
 
-impl<T: Node> Default for AddrHashSet<T, DefaultHasher> {
+impl<T: Debug+Eq+Hash> Default for AddrHashSet<T, DefaultHasher> {
     fn default() -> Self {
         AddrHashSet::with_capacity(DEFAULT_TABLE_CAPACITY)
     }
 }
 
-impl<T: Node> AddrHashSet<T, DefaultHasher> {
+impl<T: Debug+Eq+Hash> AddrHashSet<T, DefaultHasher> {
     pub(crate) fn with_capacity(c: usize) -> Self {
         Self::with_capacity_and_hasher(c)
     }
 
 }
 
-impl<T: Node, H: Hasher+Default> AddrHashSet<T, H> {
+impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     /// Create new `AddrHashSet` with specified capacity and hasher
     pub(crate) fn with_capacity_and_hasher(c: usize) -> Self {
         // better way?
@@ -217,7 +218,7 @@ impl<T: Node, H: Hasher+Default> AddrHashSet<T, H> {
 
 }
 
-impl<T: 'static + Node, H: Hasher+Default> AddrHashSet<T, H> {
+impl<T: 'static + Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     // uhhh what does it mean for a type to have a lifetime?
     // will this make things inconvenient or something?
     pub(crate) fn into_iter_2(self) -> Box<Iterator<Item=(T,Addr)>> {
@@ -238,7 +239,7 @@ impl<T: 'static + Node, H: Hasher+Default> AddrHashSet<T, H> {
     }
 }
 
-impl<T: Node, H: Hasher+Default> AddrHashSet<T, H> {
+impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     pub(crate) fn contains<Q: Hash+Eq>(&self, val: &Q) -> bool
         where T: Borrow<Q>
     {
@@ -262,7 +263,7 @@ impl<T: Node, H: Hasher+Default> AddrHashSet<T, H> {
     }
 }
 
-impl<T: Node, H: Hasher+Default> Index<Addr> for AddrHashSet<T, H> {
+impl<T: Debug+Eq+Hash, H: Hasher+Default> Index<Addr> for AddrHashSet<T, H> {
     type Output = T;
     fn index(&self, addr: Addr) -> &T {
         debug_assert_eq!(self.sig, addr.sig);
@@ -271,7 +272,7 @@ impl<T: Node, H: Hasher+Default> Index<Addr> for AddrHashSet<T, H> {
     }
 }
 
-impl<T: Node, H: Hasher+Default> IndexMut<Addr> for AddrHashSet<T, H> {
+impl<T: Debug+Eq+Hash, H: Hasher+Default> IndexMut<Addr> for AddrHashSet<T, H> {
     fn index_mut(&mut self, addr: Addr) -> &mut T {
         debug_assert_eq!(self.sig, addr.sig);
         let bucket = &mut self.table[addr.table];
