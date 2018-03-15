@@ -38,21 +38,21 @@ const DEFAULT_TABLE_CAPACITY: usize = 32;
 const DEFAULT_BUCKET_CAPACITY: usize = 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct Addr {
+pub(crate) struct Addr<T: Debug+Eq+Hash> {
     table: usize,
     bucket: usize,
-    //_kind: PhantomData,
+    _type: PhantomData<T>,
     #[cfg(debug_assertions)] sig: Signature,
 }
 
-impl Addr {
+impl<T: Debug+Eq+Hash> Addr<T> {
     #[cfg(debug_assertions)]
     fn from(table: usize, bucket: usize, sig: Signature) -> Self {
-        Addr { table, bucket, sig, }
+        Addr { table, bucket, sig, _type: PhantomData }
     }
     #[cfg(not(debug_assertions))]
     fn from(table: usize, bucket: usize) -> Self {
-        Addr { table, bucket, }
+        Addr { table, bucket, _type: PhantomData }
     }
 }
 
@@ -108,7 +108,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     /// Create a new, larger `AddrHashSet` and copy the data over
     /// Return a translation map of old `Addr`s to new ones
     // TODO do not copy over "deleted" elements?
-    pub(crate) fn from_old(old: Self) -> (Self, HashMap<Addr,Addr>) {
+    pub(crate) fn from_old(old: Self) -> (Self, HashMap<Addr<T>,Addr<T>>) {
         let new_cap = (old.capacity() as f64 * RESIZE_FACTOR) as usize;
         let mut replacements = HashMap::with_capacity(old.len());
         let mut new = Self::with_capacity_and_hasher(new_cap);
@@ -136,7 +136,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
 
     /// Insert an element, and get its referencable address
     /// If the table is "full", then return a `None`
-    pub(crate) fn insert(&mut self, val: T) -> Option<Addr> {
+    pub(crate) fn insert(&mut self, val: T) -> Option<Addr<T>> {
         if self.size as f64 / self.capacity as f64 > RESIZE_THRESHOLD {
             return None;
         }
@@ -152,6 +152,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
         Some(Addr {
             table: table_index,
             bucket: bucket_index,
+            _type: PhantomData,
             #[cfg(debug_assertions)] sig: self.sig,
         })
     }
@@ -182,7 +183,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     }
     */
 
-    pub(crate) fn iter<'a>(&'a self) -> Box<Iterator<Item=(&'a T, Addr)>+'a> {
+    pub(crate) fn iter<'a>(&'a self) -> Box<Iterator<Item=(&'a T, Addr<T>)>+'a> {
         let iter = self.table.iter().enumerate()
             .flat_map(move |(t_i, bucket)|
                       bucket.iter()
@@ -191,17 +192,18 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
                            (t, Addr {
                                table: t_i,
                                bucket: b_i,
+                               _type: PhantomData,
                                #[cfg(debug_assertions)] sig: self.sig,
                            }))
                       );
         Box::new(iter)
     }
 
-    pub(crate) fn into_iter_1(self) -> vec::IntoIter<(T,Addr)> {
+    pub(crate) fn into_iter_1(self) -> vec::IntoIter<(T,Addr<T>)> {
         // Note: this collects to a Vec first
         #[cfg(debug_assertions)] let sig = self.sig;
         let table: Vec<Vec<T>> = self.table.into();
-        let elems: Vec<(T,Addr)> = table.into_iter().enumerate()
+        let elems: Vec<(T,Addr<T>)> = table.into_iter().enumerate()
             .flat_map(|(t_i, bucket)| 
                       bucket.into_iter()
                       .enumerate()
@@ -209,6 +211,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
                            (t, Addr {
                                table: t_i, 
                                bucket: b_i,
+                               _type: PhantomData,
                                #[cfg(debug_assertions)] sig,
                            }))
                       )
@@ -221,7 +224,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
 impl<T: 'static + Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     // uhhh what does it mean for a type to have a lifetime?
     // will this make things inconvenient or something?
-    pub(crate) fn into_iter_2(self) -> Box<Iterator<Item=(T,Addr)>> {
+    pub(crate) fn into_iter_2(self) -> Box<Iterator<Item=(T,Addr<T>)>> {
         #[cfg(debug_assertions)] let sig = self.sig;
         let table: Vec<Vec<T>> = self.table.into();
         let iter = table.into_iter().enumerate()
@@ -232,6 +235,7 @@ impl<T: 'static + Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
                            (t, Addr {
                                table: t_i,
                                bucket: b_i,
+                               _type: PhantomData,
                                #[cfg(debug_assertions)] sig,
                            }))
                       );
@@ -248,7 +252,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     }
 
     /// Locates an element by its reference or returns `None` if it's absent
-    pub(crate) fn get<Q: Hash+Eq>(&self, val: &Q) -> Option<Addr> 
+    pub(crate) fn get<Q: Hash+Eq>(&self, val: &Q) -> Option<Addr<T>> 
         where T: Borrow<Q>
     {
         let table_index = Self::hash(val) % self.capacity;
@@ -258,22 +262,23 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
             .map(|(b_i, elem)| Addr {
                 table: table_index,
                 bucket: b_i,
+                _type: PhantomData,
                 #[cfg(debug_assertions)] sig: self.sig,
             })
     }
 }
 
-impl<T: Debug+Eq+Hash, H: Hasher+Default> Index<Addr> for AddrHashSet<T, H> {
+impl<T: Debug+Eq+Hash, H: Hasher+Default> Index<Addr<T>> for AddrHashSet<T, H> {
     type Output = T;
-    fn index(&self, addr: Addr) -> &T {
+    fn index(&self, addr: Addr<T>) -> &T {
         debug_assert_eq!(self.sig, addr.sig);
         let bucket = &self.table[addr.table];
         &bucket[addr.bucket]
     }
 }
 
-impl<T: Debug+Eq+Hash, H: Hasher+Default> IndexMut<Addr> for AddrHashSet<T, H> {
-    fn index_mut(&mut self, addr: Addr) -> &mut T {
+impl<T: Debug+Eq+Hash, H: Hasher+Default> IndexMut<Addr<T>> for AddrHashSet<T, H> {
+    fn index_mut(&mut self, addr: Addr<T>) -> &mut T {
         debug_assert_eq!(self.sig, addr.sig);
         let bucket = &mut self.table[addr.table];
         &mut bucket[addr.bucket]
