@@ -16,8 +16,6 @@
 //!   it just can't actually remove it from memory.
 //!  Even so. Cool stuff.
 
-//#[cfg(sig, debug_assertions)]
-
 extern crate rand;
 
 use std::fmt::Debug;
@@ -29,7 +27,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::marker::PhantomData;
 use std::vec;
 
-//use vertex::NodeT;
+use vertex::NodeT;
 
 const RESIZE_THRESHOLD: f64 = 1.5;
 const RESIZE_FACTOR: f64 = 2.0;
@@ -37,62 +35,104 @@ const MAX_BUCKET_SIZE: usize = 32;
 const DEFAULT_TABLE_CAPACITY: usize = 32;
 const DEFAULT_BUCKET_CAPACITY: usize = 4;
 
+pub(crate) trait AddrType: Clone + Eq + Hash {
+    #[cfg(debug_assertions)]
+    fn matches_signature(&self, other: Signature) -> bool;
+    #[cfg(debug_assertions)]        fn new(usize, usize, Signature) -> Self;
+    #[cfg(not(debug_assertions))]   fn new(usize, usize) -> Self;
+    fn get_table(&self) -> usize;
+    fn get_bucket(&self) -> usize;
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)] pub(crate) struct VertAddr(GenericAddr);
+#[derive(Debug, Clone, Hash, PartialEq, Eq)] pub(crate) struct EdgeAddr(GenericAddr);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct Addr {
+pub(crate) struct GenericAddr {
     table: usize,
     bucket: usize,
-    //_kind: PhantomData,
     #[cfg(debug_assertions)] sig: Signature,
 }
 
-impl Addr {
+impl AddrType for GenericAddr {
     #[cfg(debug_assertions)]
-    fn from(table: usize, bucket: usize, sig: Signature) -> Self {
-        Addr { table, bucket, sig, }
+    fn matches_signature(&self, other: Signature) -> bool { self.sig == other }
+    #[cfg(debug_assertions)] 
+    fn new(t: usize, b: usize, s: Signature) -> Self {
+        GenericAddr { table: t, bucket: b, sig: s }
     }
     #[cfg(not(debug_assertions))]
-    fn from(table: usize, bucket: usize) -> Self {
-        Addr { table, bucket, }
+    fn new(t: usize, b: usize) -> Self { GenericAddr { table: t, bucket: b } }
+    fn get_table(&self) -> usize { self.table } 
+    fn get_bucket(&self) -> usize { self.bucket }
+}
+
+impl AddrType for VertAddr {
+    #[cfg(debug_assertions)]
+    fn matches_signature(&self, other: Signature) -> bool { 
+        self.0.matches_signature(other) 
     }
+    #[cfg(debug_assertions)]
+    fn new(t: usize, b: usize, s: Signature) -> Self {
+        VertAddr(GenericAddr::new(t, b, s))
+    }
+    #[cfg(not(debug_assertions))]
+    fn new(t: usize, b: usize) -> Self { VertAddr(GenericAddr::new(t,b)) }
+    fn get_table(&self) -> usize { self.0.get_table() }
+    fn get_bucket(&self) -> usize { self.0.get_bucket() }
+}
+
+impl AddrType for EdgeAddr {
+    #[cfg(debug_assertions)]
+    fn matches_signature(&self, other: Signature) -> bool { 
+        self.0.matches_signature(other) 
+    }
+    #[cfg(debug_assertions)]
+    fn new(t: usize, b: usize, s: Signature) -> Self {
+        EdgeAddr(GenericAddr::new(t, b, s))
+    }
+    #[cfg(not(debug_assertions))]
+    fn new(t: usize, b: usize, s: Signature) -> Self { EdgeAddr(GenericAddr::new(t, b)) }
+    fn get_table(&self) -> usize { self.0.get_table() }
+    fn get_bucket(&self) -> usize { self.0.get_bucket() }
 }
 
 
 #[cfg(debug_assertions)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-struct Signature(usize);
+pub(crate) struct Signature(usize);
 
 #[cfg(debug_assertions)]
 impl Signature {
-    fn random() -> Self {
-        Signature(rand::random())
-    }
+    fn random() -> Self { Signature(rand::random()) }
 }
 
-pub(crate) type AddrSet<T> = AddrHashSet<T, DefaultHasher>;
+pub(crate) type AddrSet<T,A> = AddrHashSet<T, DefaultHasher, A>;
 
 #[derive(Debug)]
-pub(crate) struct AddrHashSet<T: Debug+Eq+Hash, H: Hasher + Default> {
+pub(crate) struct AddrHashSet<T: NodeT, H: Hasher+Default, A: AddrType> {
     capacity: usize,
     size: usize,
     table: Box<[Vec<T>]>,
     _hasher: PhantomData<H>,
+    _addr: PhantomData<A>,
     #[cfg(debug_assertions)] sig: Signature,
 }
 
-impl<T: Debug+Eq+Hash> Default for AddrHashSet<T, DefaultHasher> {
+impl<T: NodeT, A: AddrType> Default for AddrHashSet<T, DefaultHasher, A> {
     fn default() -> Self {
         AddrHashSet::with_capacity(DEFAULT_TABLE_CAPACITY)
     }
 }
 
-impl<T: Debug+Eq+Hash> AddrHashSet<T, DefaultHasher> {
+impl<T: NodeT, A: AddrType> AddrHashSet<T, DefaultHasher, A> {
     pub(crate) fn with_capacity(c: usize) -> Self {
         Self::with_capacity_and_hasher(c)
     }
 
 }
 
-impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
+impl<T: NodeT, H: Hasher+Default, A: AddrType> AddrHashSet<T, H, A> {
     /// Create new `AddrHashSet` with specified capacity and hasher
     pub(crate) fn with_capacity_and_hasher(c: usize) -> Self {
         // better way?
@@ -102,13 +142,14 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
             capacity: DEFAULT_TABLE_CAPACITY,
             table: v.into_boxed_slice(),
             _hasher: PhantomData,
+            _addr: PhantomData,
             #[cfg(debug_assertions)] sig: Signature::random(),
         }
     }
     /// Create a new, larger `AddrHashSet` and copy the data over
     /// Return a translation map of old `Addr`s to new ones
     // TODO do not copy over "deleted" elements?
-    pub(crate) fn from_old(old: Self) -> (Self, HashMap<Addr,Addr>) {
+    pub(crate) fn from_old<AA: AddrType>(old: AddrHashSet<T,H,AA>) -> (Self, HashMap<AA,A>) {
         let new_cap = (old.capacity() as f64 * RESIZE_FACTOR) as usize;
         let mut replacements = HashMap::with_capacity(old.len());
         let mut new = Self::with_capacity_and_hasher(new_cap);
@@ -136,7 +177,7 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
 
     /// Insert an element, and get its referencable address
     /// If the table is "full", then return a `None`
-    pub(crate) fn insert(&mut self, val: T) -> Option<Addr> {
+    pub(crate) fn insert(&mut self, val: T) -> Option<A> {
         if self.size as f64 / self.capacity as f64 > RESIZE_THRESHOLD {
             return None;
         }
@@ -148,69 +189,36 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
             return None;
         }
         bucket.push(val);
-        //Some(Addr::from(table_index, bucket_index, #[cfg(debug_assertions)] self.sig))
-        Some(Addr {
-            table: table_index,
-            bucket: bucket_index,
-            #[cfg(debug_assertions)] sig: self.sig,
-        })
+        #[cfg(not(debug_assertions))] return Some(A::new(table_index, bucket_index));
+        #[cfg(debug_assertions)] Some(A::new(table_index, bucket_index, self.sig))
     }
 
-    /*
-    /// Locates an element by its reference or returns `None` if it's absent
-    pub(crate) fn get(&self, val: &T) -> Option<Addr> {
-        let hash = Self::hash(&val);
-        let table_index = hash % self.capacity;
-        let bucket = &self.table[table_index];
-        for (index,elem) in bucket.iter().enumerate() {
-            if elem == val {
-                return Some(Addr {
-                    table: table_index,
-                    bucket: index,
-                    #[cfg(debug_assertions)] sig: self.sig,
-                });
-            }
-        }
-        None
-    }
-    */
 
-    /*
-    pub(crate) fn contains_key(&self, val: &T) -> bool {
-        let table_index = Self::hash(&val) % self.capacity;
-        &self.table[table_index].iter().any(|elem| elem == val)
-    }
-    */
-
-    pub(crate) fn iter<'a>(&'a self) -> Box<Iterator<Item=(&'a T, Addr)>+'a> {
+    pub(crate) fn iter<'a>(&'a self) -> Box<Iterator<Item=(&'a T, A)>+'a> {
+        let sig = self.sig;
         let iter = self.table.iter().enumerate()
             .flat_map(move |(t_i, bucket)|
                       bucket.iter()
                       .enumerate()
-                      .map(move |(b_i, t)| 
-                           (t, Addr {
-                               table: t_i,
-                               bucket: b_i,
-                               #[cfg(debug_assertions)] sig: self.sig,
-                           }))
-                      );
+                      .map(move |(b_i, t)| {
+                           let a = A::new(t_i, b_i, #[cfg(debug_assertions)] sig);
+                           (t, a)
+                      }));
         Box::new(iter)
     }
 
-    pub(crate) fn into_iter_1(self) -> vec::IntoIter<(T,Addr)> {
+    pub(crate) fn into_iter_1(self) -> vec::IntoIter<(T,A)> {
         // Note: this collects to a Vec first
         #[cfg(debug_assertions)] let sig = self.sig;
         let table: Vec<Vec<T>> = self.table.into();
-        let elems: Vec<(T,Addr)> = table.into_iter().enumerate()
+        let elems: Vec<(T,A)> = table.into_iter().enumerate()
             .flat_map(|(t_i, bucket)| 
                       bucket.into_iter()
                       .enumerate()
-                      .map(move |(b_i, t)|
-                           (t, Addr {
-                               table: t_i, 
-                               bucket: b_i,
-                               #[cfg(debug_assertions)] sig,
-                           }))
+                      .map(move |(b_i, t)| {
+                           #[cfg(debug_assertions)] return (t, A::new(t_i, b_i, sig));
+                           #[cfg(not(debug_assertions))] (t, A::new(t_i, b_i))
+                           })
                       )
             .collect();
         elems.into_iter()
@@ -218,10 +226,10 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
 
 }
 
-impl<T: 'static + Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
+impl<T: 'static + NodeT, H: Hasher+Default, A: AddrType> AddrHashSet<T, H, A> {
     // uhhh what does it mean for a type to have a lifetime?
     // will this make things inconvenient or something?
-    pub(crate) fn into_iter_2(self) -> Box<Iterator<Item=(T,Addr)>> {
+    pub(crate) fn into_iter_2(self) -> Box<Iterator<Item=(T,A)>> {
         #[cfg(debug_assertions)] let sig = self.sig;
         let table: Vec<Vec<T>> = self.table.into();
         let iter = table.into_iter().enumerate()
@@ -229,17 +237,13 @@ impl<T: 'static + Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
                       bucket.into_iter()
                       .enumerate()
                       .map(move |(b_i, t)|
-                           (t, Addr {
-                               table: t_i,
-                               bucket: b_i,
-                               #[cfg(debug_assertions)] sig,
-                           }))
-                      );
+                           (t, A::new(t_i, b_i, #[cfg(debug_assertions)] sig))
+                           ));
         Box::new(iter)
     }
 }
 
-impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
+impl<T: NodeT, H: Hasher+Default, A: AddrType> AddrHashSet<T, H, A> {
     pub(crate) fn contains<Q: Hash+Eq>(&self, val: &Q) -> bool
         where T: Borrow<Q>
     {
@@ -248,35 +252,32 @@ impl<T: Debug+Eq+Hash, H: Hasher+Default> AddrHashSet<T, H> {
     }
 
     /// Locates an element by its reference or returns `None` if it's absent
-    pub(crate) fn get<Q: Hash+Eq>(&self, val: &Q) -> Option<Addr> 
+    pub(crate) fn get<Q: Hash+Eq>(&self, val: &Q) -> Option<A> 
         where T: Borrow<Q>
     {
         let table_index = Self::hash(val) % self.capacity;
+        let sig = self.sig;
         self.table[table_index].iter()
             .enumerate()
             .find(|&(_, elem)| elem.borrow() == val)
-            .map(|(b_i, elem)| Addr {
-                table: table_index,
-                bucket: b_i,
-                #[cfg(debug_assertions)] sig: self.sig,
-            })
+            .map(|(b_i, elem)| A::new(table_index, b_i, #[cfg(debug_assertions)] sig))
     }
 }
 
-impl<T: Debug+Eq+Hash, H: Hasher+Default> Index<Addr> for AddrHashSet<T, H> {
+impl<T: NodeT, H: Hasher+Default, A: AddrType> Index<A> for AddrHashSet<T, H, A> {
     type Output = T;
-    fn index(&self, addr: Addr) -> &T {
-        debug_assert_eq!(self.sig, addr.sig);
-        let bucket = &self.table[addr.table];
-        &bucket[addr.bucket]
+    fn index(&self, addr: A) -> &T {
+        debug_assert!(addr.matches_signature(self.sig));
+        let bucket = &self.table[addr.get_table()];
+        &bucket[addr.get_bucket()]
     }
 }
 
-impl<T: Debug+Eq+Hash, H: Hasher+Default> IndexMut<Addr> for AddrHashSet<T, H> {
-    fn index_mut(&mut self, addr: Addr) -> &mut T {
-        debug_assert_eq!(self.sig, addr.sig);
-        let bucket = &mut self.table[addr.table];
-        &mut bucket[addr.bucket]
+impl<T: NodeT, H: Hasher+Default, A: AddrType> IndexMut<A> for AddrHashSet<T, H, A> {
+    fn index_mut(&mut self, addr: A) -> &mut T {
+        debug_assert!(addr.matches_signature(self.sig));
+        let bucket = &mut self.table[addr.get_table()];
+        &mut bucket[addr.get_bucket()]
     }
 }
 

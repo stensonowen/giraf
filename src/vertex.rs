@@ -5,7 +5,7 @@ use edge::{Edge,};
 use edge::{EdgeWeight};
 use edge::{EdgeDir, DirectedEdge, UndirectedEdge};
 
-use addr_hm::Addr;
+use addr_hm::{VertAddr, EdgeAddr};
 
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -13,6 +13,7 @@ use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 pub trait NodeT: fmt::Debug + Eq + Hash {}
+impl<T: fmt::Debug + Eq + Hash> NodeT for T {}
 
 pub trait VertexDir<W: EdgeWeight>: fmt::Debug + Default {
     type EdgePair: EdgeDir<W, VertexPair=Self>;
@@ -22,16 +23,13 @@ pub trait VertexDir<W: EdgeWeight>: fmt::Debug + Default {
 }
 #[derive(Debug)] 
 pub struct DirectedVertex<W: EdgeWeight> {
-    //parents: Vec<Edge<DirectedEdge, W>>,
-    //children: Vec<Edge<DirectedEdge, W>>,
-    parents: Vec<Addr>,
-    children: Vec<Addr>,
+    parents: Vec<EdgeAddr>,
+    children: Vec<EdgeAddr>,
     _x: PhantomData<W>,
 }
 #[derive(Debug)] 
 pub struct UndirectedVertex<W: EdgeWeight> {
-    //neighbors: Vec<Edge<UndirectedEdge, W>>,
-    neighbors: Vec<Addr>,
+    neighbors: Vec<EdgeAddr>,
     _x: PhantomData<W>,
 }
 impl<W: EdgeWeight> VertexDir<W> for DirectedVertex<W> {
@@ -157,5 +155,6 @@ impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Hash for Vertex<V,D,W> {
         self.val.hash(state);
     }
 }
-impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> NodeT for Vertex<V,D,W> { }
+//impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> NodeT for Vertex<V,D,W> { }
+
 

@@ -6,7 +6,8 @@ use std::hash::Hash;
 
 use vertex::{Vertex, NodeT};
 use vertex::{VertexDir, DirectedVertex, UndirectedVertex};
-use addr_hm::Addr;
+use addr_hm::{VertAddr};
+//use addr_hm::Addr;
 
 
 // ********************************************************
@@ -51,8 +52,8 @@ pub struct Edge<D: EdgeDir<W>, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
     weight: W,
-    lhs: Addr,
-    rhs: Addr,
+    lhs: VertAddr,
+    rhs: VertAddr,
 }
 
 

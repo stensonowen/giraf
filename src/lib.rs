@@ -13,7 +13,8 @@ mod vertex;
 use vertex::{Vertex, NodeT};
 
 mod addr_hm;
-use addr_hm::{Addr, AddrSet};
+//use addr_hm::{Addr, AddrSet};
+use addr_hm::{AddrSet, VertAddr, EdgeAddr};
 
 #[derive(Debug)]
 pub struct Graph<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
@@ -25,8 +26,8 @@ pub struct Graph<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
 
     //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
     //nodes: HashSet<Vertex<V,D,W>>,
-    nodes: AddrSet<Vertex<V,D,W>>,
-    edges: AddrSet<Edge<D,W>>,
+    nodes: AddrSet<Vertex<V,D,W>, VertAddr>,
+    edges: AddrSet<Edge<D,W>, EdgeAddr>,
 
 }
 
