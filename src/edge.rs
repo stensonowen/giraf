@@ -47,12 +47,12 @@ impl EdgeWeight for SignedEdge { }
 // ********************************************************
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Edge<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
+pub struct Edge<D: EdgeDir<W>, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
     weight: W,
-    lhs: Addr<V>,
-    rhs: Addr<V>,
+    lhs: Addr,
+    rhs: Addr,
 }
 
 

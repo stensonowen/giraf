@@ -14,27 +14,27 @@ use std::marker::PhantomData;
 
 pub trait NodeT: fmt::Debug + Eq + Hash {}
 
-pub trait VertexDir<V: NodeT, W: EdgeWeight>: fmt::Debug + Default {
+pub trait VertexDir<W: EdgeWeight>: fmt::Debug + Default {
     type EdgePair: EdgeDir<W, VertexPair=Self>;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>>;
     //fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>);
     //fn register_child(&mut self, edge: Edge<Self::EdgePair,W>);
 }
 #[derive(Debug)] 
-pub struct DirectedVertex<V: NodeT, W: EdgeWeight> {
+pub struct DirectedVertex<W: EdgeWeight> {
     //parents: Vec<Edge<DirectedEdge, W>>,
     //children: Vec<Edge<DirectedEdge, W>>,
-    parents: Vec<Addr<Edge<V, DirectedEdge, W>>>,
-    children: Vec<Addr<Edge<V, DirectedEdge, W>>>,
+    parents: Vec<Addr>,
+    children: Vec<Addr>,
     _x: PhantomData<W>,
 }
 #[derive(Debug)] 
-pub struct UndirectedVertex<V: NodeT, W: EdgeWeight> {
+pub struct UndirectedVertex<W: EdgeWeight> {
     //neighbors: Vec<Edge<UndirectedEdge, W>>,
-    neighbors: Vec<Addr<Edge<V, UndirectedEdge, W>>>,
+    neighbors: Vec<Addr>,
     _x: PhantomData<W>,
 }
-impl<V: NodeT, W: EdgeWeight> VertexDir<V, W> for DirectedVertex<V, W> {
+impl<W: EdgeWeight> VertexDir<W> for DirectedVertex<W> {
     type EdgePair = DirectedEdge;
     //fn get_neighbors<'a>(&'a self) -> Box<Iterator<Item=&'a Vertex<V>>> {
         //self.parents.iter().map(Edge::get_src)
@@ -48,7 +48,7 @@ impl<V: NodeT, W: EdgeWeight> VertexDir<V, W> for DirectedVertex<V, W> {
     }
     */
 }
-impl<V: NodeT, W: EdgeWeight> VertexDir<V, W> for UndirectedVertex<V, W> {
+impl<W: EdgeWeight> VertexDir<W> for UndirectedVertex<W> {
     type EdgePair = UndirectedEdge;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>> {
         //unimplemented!()
@@ -63,7 +63,7 @@ impl<V: NodeT, W: EdgeWeight> VertexDir<V, W> for UndirectedVertex<V, W> {
     */
 }
 
-impl<V: NodeT, W: EdgeWeight> Default for DirectedVertex<V, W> {
+impl<W: EdgeWeight> Default for DirectedVertex<W> {
     fn default() -> Self {
         DirectedVertex {
             parents: vec![],
@@ -72,7 +72,7 @@ impl<V: NodeT, W: EdgeWeight> Default for DirectedVertex<V, W> {
         }
     }
 }
-impl<V: NodeT, W: EdgeWeight> Default for UndirectedVertex<V, W> {
+impl<W: EdgeWeight> Default for UndirectedVertex<W> {
     fn default() -> Self {
         UndirectedVertex {
             neighbors: vec![],
