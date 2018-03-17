@@ -18,8 +18,8 @@ impl<T: fmt::Debug + Eq + Hash> NodeT for T {}
 pub trait VertexDir: fmt::Debug + Default {
     type EdgePair: EdgeDir<VertexPair=Self>;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>>;
-    //fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>);
-    //fn register_child(&mut self, edge: Edge<Self::EdgePair,W>);
+    fn register_parent(&mut self, edge: EdgeAddr);
+    fn register_child(&mut self, edge: EdgeAddr);
 }
 #[derive(Debug)] 
 pub struct DirectedVertex {
@@ -36,28 +36,24 @@ impl VertexDir for DirectedVertex {
     //fn get_neighbors<'a>(&'a self) -> Box<Iterator<Item=&'a Vertex<V>>> {
         //self.parents.iter().map(Edge::get_src)
     //}
-    /*
-    fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>) {
+    fn register_parent(&mut self, edge: EdgeAddr) {
         self.parents.push(edge);
     }
-    fn register_child(&mut self, edge: Edge<Self::EdgePair,W>) {
+    fn register_child(&mut self, edge: EdgeAddr) {
         self.children.push(edge);
     }
-    */
 }
 impl VertexDir for UndirectedVertex {
     type EdgePair = UndirectedEdge;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>> {
         //unimplemented!()
     //}
-    /*
-    fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>) {
+    fn register_parent(&mut self, edge: EdgeAddr) {
         self.neighbors.push(edge);
     }
-    fn register_child(&mut self, edge: Edge<Self::EdgePair,W>) {
+    fn register_child(&mut self, edge: EdgeAddr) {
         self.neighbors.push(edge);
     }
-    */
 }
 
 impl Default for DirectedVertex {
@@ -79,23 +75,21 @@ impl Default for UndirectedVertex {
 #[derive(Debug)] 
 pub struct Vertex<V: NodeT, D: EdgeDir> {
     val: V,
-    dir: <D as EdgeDir>::VertexPair,
+    dir: D::VertexPair,
     //_w: PhantomData<W>,
 }
 
-/*
-impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Vertex<V,D,W> {
+impl<V: NodeT, D: EdgeDir> Vertex<V,D> {
     pub(crate) fn new(val: V) -> Self { 
         Vertex {
             val,
-            dir: <D as EdgeDir<W>>::VertexPair::default(),
-            _w: PhantomData,
+            dir: D::VertexPair::default(),
         }
     }
-    pub(crate) fn register_child_edge(&mut self, edge: Edge<D,W>) {
+    pub(crate) fn register_child_edge(&mut self, edge: EdgeAddr) {
         self.dir.register_child(edge);
     }
-    pub(crate) fn register_parent_edge(&mut self, edge: Edge<D,W>) {
+    pub(crate) fn register_parent_edge(&mut self, edge: EdgeAddr) {
         self.dir.register_parent(edge);
     }
 }
@@ -109,7 +103,7 @@ impl<V: NodeT, D, W: EdgeWeight, P> Vertex<V,D,W>
 */
 
 
-impl<V: NodeT, W: EdgeWeight> Vertex<V, DirectedEdge, W> {
+impl<V: NodeT> Vertex<V, DirectedEdge> {
     /*
     fn register_parent(&mut self, edge: Edge<DirectedEdge, W>) {
         self.dir.parents.push(edge);
@@ -120,14 +114,13 @@ impl<V: NodeT, W: EdgeWeight> Vertex<V, DirectedEdge, W> {
     */
 }
 
-impl<V: NodeT, W: EdgeWeight> Vertex<V, UndirectedEdge, W> {
+impl<V: NodeT> Vertex<V, UndirectedEdge> {
     /*
     fn register_neighbor(&mut self, edge: Edge<UndirectedEdge, W>) {
         self.dir.neighbors.push(edge);
     }
     */
 }
-*/
 
 impl<V: NodeT, D: EdgeDir> Borrow<V> for Vertex<V,D> {
     fn borrow(&self) -> &V {

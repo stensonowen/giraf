@@ -31,15 +31,27 @@ impl EdgeDir for UndirectedEdge {
 // **********          Edge Weights              **********
 // ********************************************************
 
-pub trait EdgeWeight: fmt::Debug + Hash + Eq { }
+pub trait EdgeWeight: fmt::Debug + Hash + Eq {
+    type Weight;
+    fn new(w: Self::Weight) -> Self;
+}
 
 #[derive(Debug, Hash, PartialEq, Eq)] pub struct UnweightedEdge;
 #[derive(Debug, Hash, PartialEq, Eq)] pub struct UnsignedEdge(u32);
 #[derive(Debug, Hash, PartialEq, Eq)] pub struct SignedEdge(i32);
 
-impl EdgeWeight for UnweightedEdge { }
-impl EdgeWeight for UnsignedEdge { }
-impl EdgeWeight for SignedEdge { }
+impl EdgeWeight for UnweightedEdge {
+    type Weight = ();
+    fn new(w: Self::Weight) -> Self { UnweightedEdge }
+}
+impl EdgeWeight for UnsignedEdge {
+    type Weight = u32;
+    fn new(w: Self::Weight) -> Self { UnsignedEdge(w) }
+}
+impl EdgeWeight for SignedEdge {
+    type Weight = i32;
+    fn new(w: Self::Weight) -> Self { SignedEdge(w) }
+}
 
 
 
@@ -57,12 +69,11 @@ pub struct Edge<D: EdgeDir, W: EdgeWeight> {
 }
 
 
-/*
 // ********************************************************
 // **********          Edge                      **********
 // ********************************************************
-impl<D: EdgeDir<W>, W: EdgeWeight> Edge<D, W> {
-    pub(crate) fn between(l: Addr, r: Addr, w: W::Weight) -> Self {
+impl<D: EdgeDir, W: EdgeWeight> Edge<D, W> {
+    pub(crate) fn between(l: VertAddr, r: VertAddr, w: W::Weight) -> Self {
         Edge {
             dir: D::default(),
             weight: W::new(w),
@@ -75,7 +86,7 @@ impl<D: EdgeDir<W>, W: EdgeWeight> Edge<D, W> {
 // ********************************************************
 // **********          Unweighted Edge           **********
 // ********************************************************
-impl<D: EdgeDir<UnweightedEdge>> Edge<D, UnweightedEdge> {
+impl<D: EdgeDir> Edge<D, UnweightedEdge> {
     /*
     pub(crate) fn between(lhs: Vertex<N>, rhs: Vertex<N>) -> Self {
         Edge {
@@ -87,6 +98,7 @@ impl<D: EdgeDir<UnweightedEdge>> Edge<D, UnweightedEdge> {
     */
 }
 
+/*
 // ********************************************************
 // **********          Edge with Unsigned Weights**********
 // ********************************************************

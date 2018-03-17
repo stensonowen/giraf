@@ -44,8 +44,9 @@ pub(crate) trait AddrType: Clone + Eq + Hash {
     fn get_bucket(&self) -> usize;
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)] pub(crate) struct VertAddr(GenericAddr);
-#[derive(Debug, Clone, Hash, PartialEq, Eq)] pub(crate) struct EdgeAddr(GenericAddr);
+// TODO make not pub
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)] pub struct VertAddr(GenericAddr);
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)] pub struct EdgeAddr(GenericAddr);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct GenericAddr {
