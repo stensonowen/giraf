@@ -17,7 +17,7 @@ mod addr_hm;
 use addr_hm::{AddrSet, VertAddr, EdgeAddr};
 
 #[derive(Debug)]
-pub struct Graph<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
+pub struct Graph<V: NodeT, D: EdgeDir, W: EdgeWeight> {
     // `State` element: can store counter if in building state
     // maybe use `rental` to refer to self? does that mean we can't move G?
 
@@ -26,7 +26,7 @@ pub struct Graph<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
 
     //nodes: HashMap<Vertex<V>, Vec<Edge<V,D,W>>>,
     //nodes: HashSet<Vertex<V,D,W>>,
-    nodes: AddrSet<Vertex<V,D,W>, VertAddr>,
+    nodes: AddrSet<Vertex<V,D>, VertAddr>,
     edges: AddrSet<Edge<D,W>, EdgeAddr>,
 
 }

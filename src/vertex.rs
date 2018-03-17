@@ -15,24 +15,23 @@ use std::marker::PhantomData;
 pub trait NodeT: fmt::Debug + Eq + Hash {}
 impl<T: fmt::Debug + Eq + Hash> NodeT for T {}
 
-pub trait VertexDir<W: EdgeWeight>: fmt::Debug + Default {
-    type EdgePair: EdgeDir<W, VertexPair=Self>;
+pub trait VertexDir: fmt::Debug + Default {
+    type EdgePair: EdgeDir<VertexPair=Self>;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>>;
     //fn register_parent(&mut self, edge: Edge<Self::EdgePair,W>);
     //fn register_child(&mut self, edge: Edge<Self::EdgePair,W>);
 }
 #[derive(Debug)] 
-pub struct DirectedVertex<W: EdgeWeight> {
+pub struct DirectedVertex {
     parents: Vec<EdgeAddr>,
     children: Vec<EdgeAddr>,
-    _x: PhantomData<W>,
+    //_x: PhantomData<W>,
 }
 #[derive(Debug)] 
-pub struct UndirectedVertex<W: EdgeWeight> {
+pub struct UndirectedVertex {
     neighbors: Vec<EdgeAddr>,
-    _x: PhantomData<W>,
 }
-impl<W: EdgeWeight> VertexDir<W> for DirectedVertex<W> {
+impl VertexDir for DirectedVertex {
     type EdgePair = DirectedEdge;
     //fn get_neighbors<'a>(&'a self) -> Box<Iterator<Item=&'a Vertex<V>>> {
         //self.parents.iter().map(Edge::get_src)
@@ -46,7 +45,7 @@ impl<W: EdgeWeight> VertexDir<W> for DirectedVertex<W> {
     }
     */
 }
-impl<W: EdgeWeight> VertexDir<W> for UndirectedVertex<W> {
+impl VertexDir for UndirectedVertex {
     type EdgePair = UndirectedEdge;
     //fn get_neighbors(&self) -> Box<Iterator<Item=&Vertex<V>>> {
         //unimplemented!()
@@ -61,29 +60,27 @@ impl<W: EdgeWeight> VertexDir<W> for UndirectedVertex<W> {
     */
 }
 
-impl<W: EdgeWeight> Default for DirectedVertex<W> {
+impl Default for DirectedVertex {
     fn default() -> Self {
         DirectedVertex {
             parents: vec![],
             children: vec![],
-            _x: PhantomData,
         }
     }
 }
-impl<W: EdgeWeight> Default for UndirectedVertex<W> {
+impl Default for UndirectedVertex {
     fn default() -> Self {
         UndirectedVertex {
             neighbors: vec![],
-            _x: PhantomData,
         }
     }
 }
 
 #[derive(Debug)] 
-pub struct Vertex<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> {
+pub struct Vertex<V: NodeT, D: EdgeDir> {
     val: V,
-    dir: <D as EdgeDir<W>>::VertexPair,
-    _w: PhantomData<W>,
+    dir: <D as EdgeDir>::VertexPair,
+    //_w: PhantomData<W>,
 }
 
 /*
@@ -132,7 +129,7 @@ impl<V: NodeT, W: EdgeWeight> Vertex<V, UndirectedEdge, W> {
 }
 */
 
-impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Borrow<V> for Vertex<V,D,W> {
+impl<V: NodeT, D: EdgeDir> Borrow<V> for Vertex<V,D> {
     fn borrow(&self) -> &V {
         &self.val
     }
@@ -144,13 +141,13 @@ impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Borrow<V> for Vertex<V,D,W> {
 // Could this ever cause data corruption? I don't think so
 // Users can't add a second identical elem (it'll just replace the first)
 
-impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> PartialEq for Vertex<V,D,W> {
+impl<V: NodeT, D: EdgeDir> PartialEq for Vertex<V,D> {
     fn eq(&self, other: &Self) -> bool {
         self.val == other.val
     }
 }
-impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Eq for Vertex<V,D,W> { }
-impl<V: NodeT, D: EdgeDir<W>, W: EdgeWeight> Hash for Vertex<V,D,W> {
+impl<V: NodeT, D: EdgeDir> Eq for Vertex<V,D> { }
+impl<V: NodeT, D: EdgeDir> Hash for Vertex<V,D> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.val.hash(state);
     }

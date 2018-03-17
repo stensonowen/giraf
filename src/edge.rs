@@ -14,16 +14,16 @@ use addr_hm::{VertAddr};
 // **********          Edge Directions           **********
 // ********************************************************
 
-pub trait EdgeDir<W: EdgeWeight>: fmt::Debug + Default + Eq + Hash {
-    type VertexPair: VertexDir<W, EdgePair=Self>;
+pub trait EdgeDir: fmt::Debug + Default + Eq + Hash {
+    type VertexPair: VertexDir<EdgePair=Self>;
 }
 #[derive(Debug, Default, PartialEq, Eq, Hash)] pub struct DirectedEdge;
 #[derive(Debug, Default, PartialEq, Eq, Hash)] pub struct UndirectedEdge;
-impl<W: EdgeWeight> EdgeDir<W> for DirectedEdge {
-    type VertexPair = DirectedVertex<W>;
+impl EdgeDir for DirectedEdge {
+    type VertexPair = DirectedVertex;
 }
-impl<W: EdgeWeight> EdgeDir<W> for UndirectedEdge {
-    type VertexPair = UndirectedVertex<W>;
+impl EdgeDir for UndirectedEdge {
+    type VertexPair = UndirectedVertex;
 }
 
 
@@ -48,7 +48,7 @@ impl EdgeWeight for SignedEdge { }
 // ********************************************************
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Edge<D: EdgeDir<W>, W: EdgeWeight> {
+pub struct Edge<D: EdgeDir, W: EdgeWeight> {
     // if Directed, edge goes from left to right
     dir: D,
     weight: W,
