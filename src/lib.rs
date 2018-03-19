@@ -1,5 +1,12 @@
 #![allow(unused)]
 
+/*
+ * proper way to store edges? given that they're probably non-unique?
+ *  maybe just only insert into AddrHS if absent?
+ *  maybe use a vector and just push everything?
+ *      never need to look up an edge by its weight or anything
+ */
+
 use std::fmt;
 use std::collections::HashSet;
 use std::collections::HashMap;
@@ -7,7 +14,8 @@ use std::collections::HashMap;
 mod edge;
 use edge::{Edge};
 use edge::{EdgeDir, DirectedEdge, UndirectedEdge};
-use edge::{EdgeWeight, SignedEdge, UnsignedEdge, UnweightedEdge};
+//use edge::{EdgeWeight, SignedEdge, UnsignedEdge, UnweightedEdge};
+use edge::{EdgeWeight, UnweightedEdge};
 
 mod vertex;
 use vertex::{Vertex, NodeT};
@@ -91,7 +99,7 @@ impl<V: NodeT> Graph<V, UndirectedEdge, UnweightedEdge> {
     {
         let lhs = self.nodes.get(l)?;
         let rhs = self.nodes.get(r)?;
-        let edge = Edge::between(lhs.clone(), rhs.clone(), ());
+        let edge = Edge::between(lhs.clone(), rhs.clone(), UnweightedEdge);
         let edge_addr = self.edges.insert(edge)?;
         self.nodes[lhs].register_neighbor(edge_addr.clone());
         self.nodes[rhs].register_neighbor(edge_addr.clone());
@@ -113,7 +121,7 @@ impl<V: NodeT> Graph<V, DirectedEdge, UnweightedEdge> {
     {
         let lhs = self.nodes.get(l)?;
         let rhs = self.nodes.get(r)?;
-        let edge = Edge::between(lhs.clone(), rhs.clone(), ());
+        let edge = Edge::between(lhs.clone(), rhs.clone(), UnweightedEdge);
         let edge_addr = self.edges.insert(edge)?;
         self.nodes[lhs].register_child(edge_addr.clone());
         self.nodes[rhs].register_parent(edge_addr.clone());

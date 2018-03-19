@@ -7,8 +7,12 @@ use std::hash::Hash;
 use vertex::{Vertex, NodeT};
 use vertex::{VertexDir, DirectedVertex, UndirectedVertex};
 use addr_hm::{VertAddr};
-//use addr_hm::Addr;
 
+
+pub trait EdgeWeight: fmt::Debug + Hash + Eq {}
+#[derive(Debug, Hash, PartialEq, Eq)] pub struct UnweightedEdge;
+impl EdgeWeight for UnweightedEdge {}
+//impl<T: fmt::Debug> EdgeT for T {}
 
 // ********************************************************
 // **********          Edge Directions           **********
@@ -31,6 +35,7 @@ impl EdgeDir for UndirectedEdge {
 // **********          Edge Weights              **********
 // ********************************************************
 
+/*
 pub trait EdgeWeight: fmt::Debug + Hash + Eq {
     type Weight;
     fn new(w: Self::Weight) -> Self;
@@ -52,6 +57,7 @@ impl EdgeWeight for SignedEdge {
     type Weight = i32;
     fn new(w: Self::Weight) -> Self { SignedEdge(w) }
 }
+*/
 
 
 
@@ -73,10 +79,11 @@ pub struct Edge<D: EdgeDir, W: EdgeWeight> {
 // **********          Edge                      **********
 // ********************************************************
 impl<D: EdgeDir, W: EdgeWeight> Edge<D, W> {
-    pub(crate) fn between(l: VertAddr, r: VertAddr, w: W::Weight) -> Self {
+    pub(crate) fn between(l: VertAddr, r: VertAddr, w: W) -> Self {
         Edge {
             dir: D::default(),
-            weight: W::new(w),
+            //weight: W::new(w),
+            weight: w,
             lhs: l,
             rhs: r,
         }
