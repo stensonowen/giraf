@@ -104,22 +104,18 @@ impl<V: NodeT, D, W: EdgeWeight, P> Vertex<V,D,W>
 
 
 impl<V: NodeT> Vertex<V, DirectedEdge> {
-    /*
-    fn register_parent(&mut self, edge: Edge<DirectedEdge, W>) {
+    pub(crate) fn register_parent(&mut self, edge: EdgeAddr) {
         self.dir.parents.push(edge);
     }
-    fn register_child(&mut self, edge: Edge<DirectedEdge, W>) {
+    pub(crate) fn register_child(&mut self, edge: EdgeAddr) {
         self.dir.children.push(edge);
     }
-    */
 }
 
 impl<V: NodeT> Vertex<V, UndirectedEdge> {
-    /*
-    fn register_neighbor(&mut self, edge: Edge<UndirectedEdge, W>) {
+    pub(crate) fn register_neighbor(&mut self, edge: EdgeAddr) {
         self.dir.neighbors.push(edge);
     }
-    */
 }
 
 impl<V: NodeT, D: EdgeDir> Borrow<V> for Vertex<V,D> {

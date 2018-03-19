@@ -53,10 +53,10 @@ impl<V: NodeT, D: EdgeDir> Graph<V, D, UnweightedEdge> {
     // returns edge reference or None if nothing was added (invalid input)
     // inputs must have `self` lifetime, so they're valid unless deleted
     // can't just take V as input: would need to create Vertex<&V> :/
-    pub fn add_edge<'a>(&'a mut self, 
-                        l: &'a Vertex<V, D>, 
-                        r: &'a Vertex<V, D>) 
-                        -> Option<EdgeAddr> {
+    /*
+    pub fn add_edge<'a>(&'a mut self, l: &'a Vertex<V,D>, r: &'a Vertex<V,D>)
+        -> Option<EdgeAddr> 
+    {
         let lhs = self.nodes.get(l)?;
         let rhs = self.nodes.get(r)?;
         let edge = Edge::between(lhs, rhs, ());
@@ -65,9 +65,9 @@ impl<V: NodeT, D: EdgeDir> Graph<V, D, UnweightedEdge> {
         self.nodes[rhs].register_parent_edge(edge_addr);
         Some(edge_addr)
     }
+    */
 }
 
-/*
 
 // ******************************************************************
 // **********          Undirected                          **********
@@ -84,6 +84,19 @@ impl<V: NodeT> Graph<V, UndirectedEdge, UnweightedEdge> {
     pub fn new_undirected_unweighted() -> Self {
         Self::new()
     }
+    pub fn add_edge<'a>(&'a mut self, 
+                        l: &'a Vertex<V, UndirectedEdge>, 
+                        r: &'a Vertex<V, UndirectedEdge>) 
+        -> Option<EdgeAddr> 
+    {
+        let lhs = self.nodes.get(l)?;
+        let rhs = self.nodes.get(r)?;
+        let edge = Edge::between(lhs.clone(), rhs.clone(), ());
+        let edge_addr = self.edges.insert(edge)?;
+        self.nodes[lhs].register_neighbor(edge_addr.clone());
+        self.nodes[rhs].register_neighbor(edge_addr.clone());
+        Some(edge_addr)
+    }
 }
 
 // ******************************************************************
@@ -93,25 +106,22 @@ impl<V: NodeT> Graph<V, DirectedEdge, UnweightedEdge> {
     pub fn new_directed_unweighted() -> Self {
         Self::new()
     }
-    // returns edge reference or None if nothing was added (invalid input)
-    // inputs must have `self` lifetime, so they're valid unless deleted
-    // could just take &V as input... would that be better?
-    /*
     pub fn add_edge<'a>(&'a mut self, 
-                        l: &'a Vertex<V, DirectedEdge, UnweightedEdge>, 
-                        r: &'a Vertex<V, DirectedEdge, UnweightedEdge>) 
-                        -> Option<&'a Edge<V, DirectedEdge, UnweightedEdge>>
+                        l: &'a Vertex<V, DirectedEdge>, 
+                        r: &'a Vertex<V, DirectedEdge>) 
+        -> Option<EdgeAddr> 
     {
         let lhs = self.nodes.get(l)?;
         let rhs = self.nodes.get(r)?;
-        let l_edge = Edge::between(lhs.clone(), rhs.clone(), ());
-        let r_edge = Edge::between(lhs.clone(), rhs.clone(), ());
-        //self.edges.push(edge);
-        None
+        let edge = Edge::between(lhs.clone(), rhs.clone(), ());
+        let edge_addr = self.edges.insert(edge)?;
+        self.nodes[lhs].register_child(edge_addr.clone());
+        self.nodes[rhs].register_parent(edge_addr.clone());
+        Some(edge_addr)
     }
-    */
 }
 
+/*
 // ******************************************************************
 // **********          Directed, Unsigned Weights          **********
 // ******************************************************************

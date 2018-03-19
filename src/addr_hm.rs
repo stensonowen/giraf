@@ -45,8 +45,8 @@ pub(crate) trait AddrType: Clone + Eq + Hash {
 }
 
 // TODO make not pub
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)] pub struct VertAddr(GenericAddr);
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)] pub struct EdgeAddr(GenericAddr);
+#[derive(Debug, Clone, Hash, PartialEq, Eq)] pub struct VertAddr(GenericAddr);
+#[derive(Debug, Clone, Hash, PartialEq, Eq)] pub struct EdgeAddr(GenericAddr);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct GenericAddr {
