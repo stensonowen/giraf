@@ -20,8 +20,8 @@ use edge::{EdgeWeight, UnweightedEdge};
 mod vertex;
 use vertex::{Vertex, NodeT};
 
-mod addr_hm;
-use addr_hm::{AddrSet, VertAddr, EdgeAddr};
+mod addr_collec;
+use addr_collec::{AddrSet, VertAddr, EdgeAddr};
 
 #[derive(Debug)]
 pub struct Graph<V: NodeT, D: EdgeDir, W: EdgeWeight> {

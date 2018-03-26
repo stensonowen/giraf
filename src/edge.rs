@@ -6,7 +6,7 @@ use std::hash::Hash;
 
 use vertex::{Vertex, NodeT};
 use vertex::{VertexDir, DirectedVertex, UndirectedVertex};
-use addr_hm::{VertAddr};
+use addr_collec::VertAddr;
 
 
 pub trait EdgeWeight: fmt::Debug + Hash + Eq {}

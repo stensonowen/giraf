@@ -5,7 +5,7 @@ use edge::{Edge,};
 use edge::{EdgeWeight};
 use edge::{EdgeDir, DirectedEdge, UndirectedEdge};
 
-use addr_hm::{VertAddr, EdgeAddr};
+use addr_collec::{VertAddr, EdgeAddr};
 
 use std::fmt;
 use std::hash::{Hash, Hasher};
