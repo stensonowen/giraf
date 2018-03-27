@@ -3,6 +3,7 @@ use std::fmt;
 
 use edge::{Edge, EdgeT};
 use vertex::NodeT;
+use vertex::Vertex;
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Direction
@@ -13,13 +14,13 @@ pub trait DirT<E: EdgeT>: fmt::Debug {
 }
 
 #[derive(Debug)] 
-pub(super) struct Dir<V: NodeT, E: EdgeT> {
+pub struct Dir<V: NodeT, E: EdgeT> {
     children: Vec<*const Edge<V, E, Dir<V, E>>>,
     parents: Vec<*const Edge<V, E, Dir<V, E>>>,
 }
 
 #[derive(Debug)] 
-pub(super) struct Undir<V: NodeT, E: EdgeT> {
+pub struct Undir<V: NodeT, E: EdgeT> {
     neighbors: Vec<*const Edge<V, E, Undir<V,E>>>,
 }
 
@@ -42,5 +43,8 @@ impl<V: NodeT, E: EdgeT> Dir<V,E> {
 impl<V: NodeT, E: EdgeT> Undir<V,E> {
     pub(super) fn register_neighbor(&mut self, e: *const Edge<V, E, Self>) {
         self.neighbors.push(e);
+    }
+    pub(super) fn get_neighbors(&self) -> &[*const Edge<V, E, Self>] {
+        &self.neighbors[..]
     }
 }

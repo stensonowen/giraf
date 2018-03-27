@@ -1,10 +1,10 @@
 
-use std::marker::PhantomData;
-use std::hash::Hash;
 use std::fmt;
+use std::hash::Hash;
+use std::marker::PhantomData;
 
-use edge::{EdgeT, Edge};
 use dir::{DirT, Undir, Dir};
+use edge::{EdgeT, Edge};
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Vertex
@@ -36,6 +36,24 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Vertex<V,E,D> {
 impl<V: NodeT, E: EdgeT> Vertex<V, E, Undir<V,E>> {
     pub(super) fn register_neighbor(&mut self, e: *const Edge<V, E, Undir<V,E>>) {
         self.hood.register_neighbor(e);
+    }
+    pub(super) fn get_neighbors(&self) -> Vec<&Self> {
+        let v: Vec<_> = self.hood.get_neighbors().into_iter()
+            //.map(|ptr| ptr as &Vertex<V, E, Undir<V,E>>)
+            //.map(|ptr| &*ptr)
+            .map(|&ptr| {
+                let b = self.borrow();
+                let other = unsafe { (*ptr).get_other_endpoint(b) };
+                unimplemented!()
+            }).collect(); 
+        v
+        /*
+        let mut v = vec![];
+        for &ptr in self.hood.get_neighbors() {
+            ptr.foo();
+        }
+        v
+        */
     }
 }
 
