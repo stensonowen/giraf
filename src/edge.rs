@@ -1,6 +1,7 @@
 
 use std::fmt;
 use std::rc::Rc;
+use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 use dir::{DirT, Dir, Undir};
@@ -35,23 +36,20 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Edge<V,E,D> {
             _d: PhantomData,
         }
     }
-    /*
-    pub(super) fn get_other_endpoint(&self, t: &V) -> Option<*const Vertex<V,E,D>> {
-        let (lhs, rhs) = unsafe { ((*self.lhs).borrow(), (*self.rhs).borrow()) };
-        match (t == lhs, t == rhs) {
-            (false, false) => None,
-            (true, false) => Some(self.rhs),
-            (false, true) => Some(self.rhs),
-            (true, true) => Some(self.rhs),
-        }
-    }
-    */
 }
 
-impl<V: NodeT, E: EdgeT> Edge<V, E, Dir<V,E>> { }
+impl<V: NodeT, E: EdgeT> Edge<V, E, Dir<V,E>> {
+    pub(super) fn get_src(&self) -> &V { &self.lhs }
+    pub(super) fn get_dst(&self) -> &V { &self.rhs }
+}
+
 impl<V: NodeT, E: EdgeT> Edge<V, E, Undir<V,E>> {
-    //fn get_neighbors(&self) -> &[&Vertex<V, E, Undir<V,E>>] {
-    //    //let n = self.get_neighbors();
-    //    unimplemented!()
-    //}
+    pub(super) fn get_other_endpoint(&self, t: &V) -> Option<Rc<V>> {
+        match (t == (&self.lhs).borrow(), t == (&self.rhs).borrow()) {
+            (false, false) => None,
+            (true, false) => Some(self.rhs.clone()),
+            (false, true) => Some(self.rhs.clone()),
+            (true, true) => Some(self.rhs.clone()),
+        }
+    }
 }

@@ -38,13 +38,19 @@ impl<V: NodeT, E: EdgeT> Dir<V,E> {
     pub(super) fn register_parent(&mut self, e: Rc<Edge<V, E, Self>>) {
         self.parents.push(e);
     }
+    pub(super) fn get_parents(&self) -> &[Rc<Edge<V, E, Self>>] {
+        &self.parents[..]
+    }
+    pub(super) fn get_children(&self) -> &[Rc<Edge<V, E, Self>>] {
+        &self.children[..]
+    }
 }
 
 impl<V: NodeT, E: EdgeT> Undir<V,E> {
     pub(super) fn register_neighbor(&mut self, e: Rc<Edge<V, E, Self>>) {
         self.neighbors.push(e);
     }
-    //pub(super) fn get_neighbors(&self) -> &[*const Edge<V, E, Self>] {
-    //    &self.neighbors[..]
-    //}
+    pub(super) fn get_neighbors(&self) -> &[Rc<Edge<V, E, Self>>] {
+        &self.neighbors[..]
+    }
 }

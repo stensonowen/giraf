@@ -43,6 +43,8 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
     fn get_vertex(&self, v: &V) -> Option<&Vertex<V,E,D>> {
         self.nodes.get(v)
     }
+    //pub fn get_vertex_val(&self, v: &V) -> Option<&V> 
+    //pub fn get_edge_val(&self, l: &V, r: &V) -> Option<&E> 
     fn create_edge(&mut self, e: E, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
         let edge = {
             let lhs = self.get_vertex(l)?;
@@ -53,7 +55,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
         self.edges.push(edge.clone());
         Some(edge)
     }
-    pub fn get_edge(&self, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
+    fn get_edge(&self, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
         let lhs = self.get_vertex(l)?;
         let rhs = self.get_vertex(r)?;
         unimplemented!()
@@ -67,8 +69,16 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Undir<V,E>> {
         self.nodes.get_mut(r)?.register_neighbor(edge);
         Some(())
     }
-    fn get_neighbors(&self, vert: &V) -> Option<&Vertex<V, E, Undir<V,E>>> {
-        unimplemented!()
+    fn get_neighbors(&self, vert: &V) -> Option<Vec<&Vertex<V, E, Undir<V,E>>>> {
+        let node = self.get_vertex(vert)?;
+        Some(node.get_neighbors_i().map(|v| self.get_vertex(&v).unwrap()).collect())
+    }
+    fn get_neighbors_i<'a>(&'a self, vert: &V) -> 
+        Option<Box<Iterator<Item=&'a Vertex<V, E, Undir<V,E>>> + 'a>>
+    {
+        let node = self.get_vertex(vert)?;
+        let iter = node.get_neighbors_i().map(move |v| self.get_vertex(&v).unwrap());
+        Some(Box::new(iter))
     }
 }
 
@@ -79,5 +89,22 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Dir<V,E>> {
         self.nodes.get_mut(r)?.register_parent(edge);
         Some(())
     }
+    fn get_parents(&self, vert: &V) -> Option<Vec<&Vertex<V, E, Dir<V,E>>>> {
+        let node = self.get_vertex(vert)?;
+        node.get_parents_i().map(|v| self.get_vertex(v)).collect()
+    }
+    fn get_children(&self, vert: &V) -> Option<Vec<&Vertex<V, E, Dir<V,E>>>> {
+        let node = self.get_vertex(vert)?;
+        node.get_children_i().map(|v| self.get_vertex(v)).collect()
+    }
+    /*
+    fn get_parents_i<'a>(&self, vert: &V) -> 
+        Option<Box<Iterator<Item=&'a Vertex<V, E, Dir<V,E>>> + 'a>> 
+    {
+        let node = self.get_vertex(vert)?;
+        let iter = node.get_parents_i().map(move |v| self.get_vertex(v).unwrap());
+        Some(Box::new(iter))
+    }
+    */
 }
 
