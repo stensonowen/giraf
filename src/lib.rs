@@ -1,15 +1,25 @@
+#![allow(unused)]
+
+/* TODO
+ *  Tree (should be easy, try to make it easily ↔ Graph
+ *  Path/path stuff for ret vals
+ *  Use custom iterators instead of hacks
+ *      breadth-, depth-first traversals? pre-/in-/post-order?
+ *  CopyGraph: cheaper alternative when T:Copy w/ fewer allocs
+ *  quickcheck tests, mutate, quickcheck alt?
+ *  graph variant shortcuts (e.g. `Graph::new_digraph()`)
+ *  graph ops
+ *      depth-first-search, breadth-first-search
+ */
 
 use std::rc::Rc;
-use std::collections::HashMap;
+use std::slice::Iter;
+use std::collections::{hash_map, HashMap};
 
-pub mod dir;
-use dir::{DirT, Dir, Undir};
-
-pub mod edge;
-use edge::{EdgeT, Edge, UnweightedEdge};
-
-pub mod vertex;
-use vertex::{NodeT, Vertex};
+mod dir;    use dir::{DirT, Dir, Undir};
+mod edge;   use edge::{EdgeT, Edge, UnweightedEdge};
+mod vertex; use vertex::{NodeT, Vertex};
+mod iters;  use iters::{Vertices};
 
 //mod test;
 
@@ -30,35 +40,62 @@ pub struct Graph<V: NodeT, E: EdgeT, D: DirT<E>> {
     edges: Vec<Rc<Edge<V,E,D>>>,
 }
 
+
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
+    // ctors
     pub fn new() -> Self { Graph { nodes: HashMap::new(), edges: Vec::new(), } }
     pub fn with_capacity(n: usize, m: usize) -> Self {
         Graph { nodes: HashMap::with_capacity(n), edges: Vec::with_capacity(m) }
     }
-    pub fn insert_vertex(&mut self, v: V) {
-        assert!(self.nodes.contains_key(&v) == false);
-        let vert = Vertex::new(v);
-        self.nodes.insert(vert.borrow(), vert);
+
+    // accessors
+    pub fn size(&self) -> usize { 
+        self.edges.len()
+    }
+    pub fn order(&self) -> usize {
+        self.nodes.len()
     }
     fn get_vertex(&self, v: &V) -> Option<&Vertex<V,E,D>> {
         self.nodes.get(v)
     }
     //pub fn get_vertex_val(&self, v: &V) -> Option<&V> 
     //pub fn get_edge_val(&self, l: &V, r: &V) -> Option<&E> 
-    fn create_edge(&mut self, e: E, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
-        let edge = {
-            let lhs = self.get_vertex(l)?;
-            let rhs = self.get_vertex(r)?;
-            Edge::new(e, lhs.borrow(), rhs.borrow())
-        };
-        let edge = Rc::new(edge);
-        self.edges.push(edge.clone());
-        Some(edge)
-    }
+    /*
     fn get_edge(&self, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
         let lhs = self.get_vertex(l)?;
         let rhs = self.get_vertex(r)?;
         unimplemented!()
+    }
+    */
+
+    // iterators
+    fn map_vals(&self) -> hash_map::Values<Rc<V>, Vertex<V,E,D>> {
+        self.nodes.values()
+    }
+    pub fn vertices(&self) -> Vertices<V,E,D> {
+        Vertices::new(self)
+    }
+    /*
+    pub fn edges(&self) -> Iter<Rc<Edge<V,E,D>>> {
+        self.edges.iter()
+    }
+    */
+
+    // modifiers
+    pub fn insert_vertex(&mut self, v: V) {
+        assert!(self.nodes.contains_key(&v) == false);
+        let vert = Vertex::new(v);
+        self.nodes.insert(vert.get_ref(), vert);
+    }
+    fn create_edge(&mut self, e: E, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
+        let edge = {
+            let lhs = self.get_vertex(l)?;
+            let rhs = self.get_vertex(r)?;
+            Edge::new(e, lhs.get_ref(), rhs.get_ref())
+        };
+        let edge = Rc::new(edge);
+        self.edges.push(edge.clone());
+        Some(edge)
     }
 }
 
@@ -89,6 +126,7 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Dir<V,E>> {
         self.nodes.get_mut(r)?.register_parent(edge);
         Some(())
     }
+    // TODO replace with iterators eventually
     fn get_parents(&self, vert: &V) -> Option<Vec<&Vertex<V, E, Dir<V,E>>>> {
         let node = self.get_vertex(vert)?;
         node.get_parents_i().map(|v| self.get_vertex(v)).collect()

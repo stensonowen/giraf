@@ -19,7 +19,7 @@ pub struct UnweightedEdge;
 impl EdgeT for UnweightedEdge {}
 
 #[derive(Debug)]
-pub(super) struct Edge<V: NodeT, E: EdgeT, D: DirT<E>> {
+pub struct Edge<V: NodeT, E: EdgeT, D: DirT<E>> {
     val: E,
     _d: PhantomData<D>,
     lhs: Rc<V>,

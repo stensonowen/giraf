@@ -2,6 +2,7 @@
 use std::fmt;
 use std::rc::Rc;
 use std::hash::Hash;
+use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 use dir::{DirT, Undir, Dir};
@@ -15,7 +16,7 @@ pub trait NodeT: fmt::Debug + Eq + Hash {}
 impl<T: fmt::Debug + Eq + Hash> NodeT for T {}
 
 #[derive(Debug)]
-pub(super) struct Vertex<V: NodeT, E: EdgeT, D: DirT<E>> {
+pub struct Vertex<V: NodeT, E: EdgeT, D: DirT<E>> {
     val: Rc<V>,
     hood: D,
     _e: ::std::marker::PhantomData<E>,
@@ -29,13 +30,20 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Vertex<V,E,D> {
             _e: PhantomData,
         }
     }
-    pub(super) fn borrow(&self) -> Rc<V> {
+    pub(super) fn get_ref(&self) -> Rc<V> {
         self.val.clone()
+    }
+}
+
+impl<V: NodeT, E: EdgeT, D: DirT<E>> Borrow<V> for Vertex<V,E,D> {
+    fn borrow(&self) -> &V {
+        &self.val
     }
 }
 
 use std::iter::Map;
 use std::slice::Iter;
+
 impl<V: NodeT, E: EdgeT> Vertex<V, E, Undir<V,E>> {
     pub(super) fn register_neighbor(&mut self, e: Rc<Edge<V, E, Undir<V,E>>>) {
         self.hood.register_neighbor(e);
