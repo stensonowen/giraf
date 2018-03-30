@@ -1,3 +1,4 @@
+//#![allow(unused)]
 
 /* TODO
  *  Tree (should be easy, try to make it easily ↔ Graph
@@ -10,25 +11,31 @@
  *  remove vertices/edges (assert strong count == 0)
  *  graph ops
  *      depth-first-search, breadth-first-search
+ *  look up vertex / edge by either &'a ref or by &V/(&V,&V) ?
+ *      separate functions? or with a neat trait or something?
+ *
+ *  CLEANUP
+ *      consolidate ret/panic behavior (rn we ret None on bad edge insert but panic! on vert)
  */
 
 use std::rc::Rc;
-use std::slice::Iter;
+use std::slice;
 use std::collections::{hash_map, HashMap};
 
 mod dir;    use dir::{DirT, Dir, Undir};
-mod edge;   use edge::{EdgeT, Edge};
+mod edge;   use edge::{EdgeT, Edge}; pub use edge::UnweightedEdge;
 mod vertex; use vertex::{NodeT, Vertex};
-mod iter;   use iter::{Vertices};
+mod iter;
 
-//mod test;
+#[cfg(test)] mod test;
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Graph
 ///////////////////////////////////////////////////////////////////////////////
 
-//pub type UnweightedGraph<V, D: DirT<UnweightedEdge>> = Graph<V, UnweightedEdge, D>;
-//pub type DiGraph<V, E> = Graph<V, E, Dir<V,E>>;
+pub type UnweightedGraph<V,D> = Graph<V, UnweightedEdge, D>;
+pub type UnweightedUndirectedGraph<V> = Graph<V, UnweightedEdge, Undir<V, UnweightedEdge>>;
+pub type DiGraph<V,E> = Graph<V, E, Dir<V,E>>;
 
 
 #[derive(Debug)]
@@ -72,11 +79,16 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
     fn map_vals(&self) -> hash_map::Values<Rc<V>, Vertex<V,E,D>> {
         self.nodes.values()
     }
-    pub fn vertices(&self) -> Vertices<V,E,D> {
-        Vertices::new(self)
+    pub fn vertices(&self) -> iter::Vertices<V,E,D> {
+        iter::Vertices::new(self)
     }
-    pub fn edges(&self) -> Iter<Rc<Edge<V,E,D>>> {
+    pub fn edges(&self) -> slice::Iter<Rc<Edge<V,E,D>>> {
         self.edges.iter()
+    }
+    pub fn breadth_first<'a>(&'a self, start: Option<&'a Vertex<V,E,D>>) 
+        -> iter::BreadthFirst<V,E,D> 
+    {
+        iter::BreadthFirst::new(self, start)
     }
 
     // modifiers
@@ -98,7 +110,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
 }
 
 impl<V: NodeT, E: EdgeT> Graph<V, E, Undir<V,E>> {
-    pub fn insert_edge(&mut self, e: E, l: &V, r: &V) -> Option<()> {
+    pub fn insert_undirected_edge(&mut self, e: E, l: &V, r: &V) -> Option<()> {
         let edge = self.create_edge(e, l, r)?;
         self.nodes.get_mut(l)?.register_neighbor(edge.clone());
         self.nodes.get_mut(r)?.register_neighbor(edge);
@@ -113,7 +125,7 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Undir<V,E>> {
 }
 
 impl<V: NodeT, E: EdgeT> Graph<V, E, Dir<V,E>> {
-    pub fn insert_edge(&mut self, e: E, l: &V, r: &V) -> Option<()> {
+    pub fn insert_directed_edge(&mut self, e: E, l: &V, r: &V) -> Option<()> {
         let edge = self.create_edge(e, l, r)?;
         self.nodes.get_mut(l)?.register_child(edge.clone());
         self.nodes.get_mut(r)?.register_parent(edge);

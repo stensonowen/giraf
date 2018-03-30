@@ -25,16 +25,12 @@ pub struct Edge<V: NodeT, E: EdgeT, D: DirT<E>> {
     lhs: Rc<V>,
     rhs: Rc<V>,
     // should an Edge "know" its direction? 
-    //  I think so? does the `PhantomData` contradict that?
+    //  I think so? does the need for a `PhantomData` contradict that?
 }
 
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Edge<V,E,D> {
     pub(super) fn new(e: E, l: Rc<V>, r: Rc<V>) -> Self {
-        Edge {
-            val: e,
-            lhs: l, rhs: r,
-            _d: PhantomData,
-        }
+        Edge { val: e, lhs: l, rhs: r, _d: PhantomData, }
     }
 }
 
@@ -48,7 +44,7 @@ impl<V: NodeT, E: EdgeT> Edge<V, E, Undir<V,E>> {
         match (t == (&self.lhs).borrow(), t == (&self.rhs).borrow()) {
             (false, false) => None,
             (true, false) => Some(self.rhs.clone()),
-            (false, true) => Some(self.rhs.clone()),
+            (false, true) => Some(self.lhs.clone()),
             (true, true) => Some(self.rhs.clone()),
         }
     }

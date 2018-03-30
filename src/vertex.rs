@@ -24,16 +24,17 @@ pub struct Vertex<V: NodeT, E: EdgeT, D: DirT<E>> {
 
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Vertex<V,E,D> {
     pub(crate) fn new(val: V) -> Self {
-        Vertex {
-            val: Rc::new(val),
-            hood: D::new(),
-            _e: PhantomData,
-        }
+        Vertex { val: Rc::new(val), hood: D::new(), _e: PhantomData, }
     }
     pub(super) fn get_ref(&self) -> Rc<V> {
         self.val.clone()
     }
-    //pub(super) fn get_reachable<'a>(&'a self) -> Box<Iterator<Item=&'a V>+'a> { }
+    pub fn get(&self) -> &V {
+        &self.val
+    }
+    pub fn degree(&self) -> usize {
+        self.hood.degree()
+    }
 }
 
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Borrow<V> for Vertex<V,E,D> {
@@ -94,3 +95,4 @@ impl<V: NodeT, E: EdgeT> Vertex<V, E, Dir<V,E>> {
         self.hood.get_children()
     }
 }
+

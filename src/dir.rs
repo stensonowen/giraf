@@ -12,7 +12,6 @@ use vertex::NodeT;
 pub trait DirT<E: EdgeT>: fmt::Debug {
     fn new() -> Self;
     fn degree(&self) -> usize;
-    //fn reachable(&self) -> &[Rc<Edge<V, E, Self>>];
 }
 
 #[derive(Debug)] 
@@ -29,12 +28,10 @@ pub struct Undir<V: NodeT, E: EdgeT> {
 impl<V: NodeT, E: EdgeT> DirT<E> for Dir<V,E> {
     fn new() -> Self { Dir { children: vec![], parents: vec![] } }
     fn degree(&self) -> usize { self.children.len() + self.parents.len() }
-    //fn reachable(&self) -> &[Rc<Edge<V,E,Self>>] { &self.children[..] }
 }
 impl<V: NodeT, E: EdgeT> DirT<E> for Undir<V,E> {
     fn new() -> Self { Undir { neighbors: vec![] } }
     fn degree(&self) -> usize { self.neighbors.len() }
-    //fn reachable(&self) -> &[Rc<Edge<V,E,Self>>] { &self.neighbors[..] }
 }
 
 impl<V: NodeT, E: EdgeT> Dir<V,E> {
