@@ -35,6 +35,7 @@ mod iter;
 
 pub type UnweightedGraph<V,D> = Graph<V, UnweightedEdge, D>;
 pub type UnweightedUndirectedGraph<V> = Graph<V, UnweightedEdge, Undir<V, UnweightedEdge>>;
+pub type UndirectedGraph<V,E> = Graph<V, E, Undir<V,E>>;
 pub type DiGraph<V,E> = Graph<V, E, Dir<V,E>>;
 
 

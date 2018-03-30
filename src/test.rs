@@ -2,7 +2,7 @@
 use std::collections::HashSet;
 use std::borrow::Borrow;
 
-use super::{DiGraph, Graph, UnweightedUndirectedGraph};
+use super::{DiGraph, Graph, UnweightedUndirectedGraph, UndirectedGraph};
 use super::UnweightedEdge;
 
 // poset lattice looking tree thing
@@ -20,6 +20,17 @@ fn numerical_tree(n: usize) -> UnweightedUndirectedGraph<usize> {
     }
     g
 }
+
+/*
+fn hypercube(dim: usize) -> UnweightedUndirectedGraph<usize> {
+    let mut g = Graph::new();
+    for i in 0 .. 1 << dim {
+        g.insert_vertex(i);
+    }
+    unimplemented!();
+    g
+}
+*/
 
 #[test]
 fn insert() {
@@ -62,7 +73,7 @@ fn neighborhood_sizes() {
 }
 
 #[test]
-fn breadth_first() {
+fn breadth_first_lattice() {
     let g = numerical_tree(100);
     let start = g.get_vertex(&42).unwrap();
     assert_eq!(100, g.breadth_first(Some(start)).count());
@@ -78,6 +89,57 @@ fn breadth_first() {
             _ => unreachable!(),
         }
     }
+}
+
+
+// https://en.wikipedia.org/wiki/File:MapGermanyGraph.svg
+fn germany_wiki_map() -> UndirectedGraph<&'static str, u16> {
+    let mut g = Graph::new();
+    g.insert_vertex("Augsburg");
+    g.insert_vertex("Erfurt");
+    g.insert_vertex("Frankfurt");
+    g.insert_vertex("Karlsruhe");
+    g.insert_vertex("Kassel");
+    g.insert_vertex("Mannheim");
+    g.insert_vertex("München");
+    g.insert_vertex("Nürnberg");
+    g.insert_vertex("Stuttgart");
+    g.insert_vertex("Würzburg");
+    g.insert_undirected_edge(103, &"Nürnberg",  &"Würzburg");
+    g.insert_undirected_edge(167, &"München",   &"Nürnberg");
+    g.insert_undirected_edge(173, &"Frankfurt", &"Kassel");
+    g.insert_undirected_edge(183, &"Nürnberg",  &"Stuttgart");
+    g.insert_undirected_edge(186, &"Erfurt",    &"Würzburg");
+    g.insert_undirected_edge(217, &"Frankfurt", &"Würzburg");
+    g.insert_undirected_edge(250, &"Augsburg",  &"München");
+    g.insert_undirected_edge(250, &"Augsburg",  &"Karlsruhe");
+    g.insert_undirected_edge(502, &"Kassel",    &"München");
+    g.insert_undirected_edge(80,  &"Karlsruhe", &"Mannheim");
+    g.insert_undirected_edge(85,  &"Frankfurt", &"Mannheim");
+    g
+}
+
+#[test]
+fn bfs_germany() {
+    let g = germany_wiki_map();
+    assert_eq!(g.order(), g.breadth_first(None).count());
+    let start = g.get_vertex(&"Frankfurt").unwrap();
+    // https://en.wikipedia.org/wiki/File:GermanyBFS.svg
+    let rows: Vec<Vec<&'static str>> = vec![
+        vec!["Frankfurt"],
+        vec!["Mannheim", "Würzburg", "Kassel"],
+        vec!["Karlsruhe", "Nürnberg", "Erfurt", "München"],
+        vec!["Augsburg", "Stuttgart"]
+    ];
+    assert_eq!(g.order(), rows.iter().map(|v| v.len()).sum());
+    let mut cities = g.breadth_first(Some(start));
+    for row in rows {
+        for _ in 0 .. row.len() {
+            let city = cities.next().unwrap();
+            assert!(row.contains(city.get()));
+        }
+    }
+    assert!(cities.next().is_none());
 }
 
 /*

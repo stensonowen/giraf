@@ -1,12 +1,13 @@
 
 use std::mem;
 use std::rc::Rc;
+//use std::slice::Iter;
 use std::borrow::Borrow;
 use std::collections::{hash_map, HashSet, VecDeque};
 
 use Graph;
 use dir::{DirT, Undir};
-use edge::{EdgeT};
+use edge::{EdgeT, /*GenEdge*/};
 use vertex::{NodeT, Vertex};
 
 mod neighbors;
@@ -91,6 +92,7 @@ impl<'a, V: NodeT, E: EdgeT> Iterator for BreadthFirst<'a, V, E, Undir<V,E>> {
 pub struct DepthFirst<'a, V: 'a+NodeT, E: 'a+EdgeT, D: 'a+DirT<E>> {
     graph: &'a Graph<V,E,D>,
     seen: HashSet<&'a V>,
+    stack: Vec<Iter<'a, GenEdge<V,E,D>>>,
     //this: VecDeque<&'a Vertex<V,E,D>>,
     //next: Vec<&'a Vertex<V,E,D>>,
 }
@@ -109,13 +111,11 @@ impl<'a, V: 'a+NodeT, E: 'a+EdgeT, D: 'a+DirT<E>> BreadthFirst<'a,V,E,D> {
     */
 }
 
-/*
-impl<'a, V: NodeT, E: EdgeT, D: DirT<E>> Iterator for BreadthFirst<'a,V,E,D> {
-    type Item = &'a Vertex<V,E,D>;
-    fn next(&mut self) -> Option<&'a Vertex<V,E,D>> {
+impl<'a, V: NodeT, E: EdgeT> Iterator for DepthFirst<'a, V, E, Undir<V,E>> {
+    type Item = &'a Vertex<V, E, Undir<V,E>>;
+    fn next(&mut self) -> Option<&'a Vertex<V, E, Undir<V,E>>> {
         unimplemented!()
     }
 }
 */
 
-*/
