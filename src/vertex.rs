@@ -43,6 +43,12 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Borrow<V> for Vertex<V,E,D> {
     }
 }
 
+impl<V: NodeT, E: EdgeT, D: DirT<E>> AsRef<V> for Vertex<V,E,D> {
+    fn as_ref(&self) -> &V {
+        &self.val
+    }
+}
+
 impl<V: NodeT, E: EdgeT> Vertex<V, E, Undir<V,E>> {
     //pub(super) fn register_neighbor(&mut self, e: Rc<Edge<V, E, Undir<V,E>>>) {
     pub(super) fn register_neighbor(&mut self, e: UndirEdge<V,E>) {

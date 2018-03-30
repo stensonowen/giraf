@@ -73,7 +73,26 @@ fn neighborhood_sizes() {
 }
 
 #[test]
-fn breadth_first_lattice() {
+fn depth_first_lattice_undir() {
+    // 0, 1, 10, 11, .., 19, 2, 20, 21, .., 29, 3, ...
+    let g = numerical_tree(100);
+    assert_eq!(100, g.depth_first(None).count());
+    let start = g.get_vertex(&0).unwrap();
+    let mut df = g.depth_first(Some(start)).map(|v| *v.as_ref());
+    assert_eq!(0, df.next().unwrap());
+    for _tens in 1..10 {
+        let x = df.next().unwrap();
+        assert!(x > 0); assert!(x < 10);
+        for _ones in 0..10 {
+            let xx = df.next().unwrap();
+            assert!(xx > 9); assert!(xx < 100);
+            assert_eq!(x, xx/10);
+        }
+    }
+}
+
+#[test]
+fn breadth_first_lattice_undir() {
     let g = numerical_tree(100);
     let start = g.get_vertex(&42).unwrap();
     assert_eq!(100, g.breadth_first(Some(start)).count());
@@ -120,7 +139,7 @@ fn germany_wiki_map() -> UndirectedGraph<&'static str, u16> {
 }
 
 #[test]
-fn bfs_germany() {
+fn bfs_germany_undir() {
     let g = germany_wiki_map();
     assert_eq!(g.order(), g.breadth_first(None).count());
     let start = g.get_vertex(&"Frankfurt").unwrap();

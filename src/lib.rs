@@ -1,4 +1,6 @@
 //#![allow(unused)]
+#![allow(unknown_lints, bool_comparison, new_without_default_derive)]
+// `x == false` is better than `!x` and I'll fight anyone who disagrees
 
 /* TODO
  *  Tree (should be easy, try to make it easily ↔ Graph
@@ -92,10 +94,15 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
     {
         iter::BreadthFirst::new(self, start)
     }
+    pub fn depth_first<'a>(&'a self, start: Option<&'a Vertex<V,E,D>>)
+        -> iter::DepthFirst<V,E,D>
+    {
+        iter::DepthFirst::new(self, start)
+    }
 
     // modifiers
     pub fn insert_vertex(&mut self, v: V) {
-        assert!(! self.nodes.contains_key(&v));
+        assert!(self.nodes.contains_key(&v) == false);
         let vert = Vertex::new(v);
         self.nodes.insert(vert.get_ref(), vert);
     }
