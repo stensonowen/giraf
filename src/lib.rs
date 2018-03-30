@@ -5,8 +5,6 @@
 /* TODO
  *  Tree (should be easy, try to make it easily ↔ Graph
  *  Path/path stuff for ret vals
- *  Use custom iterators instead of hacks
- *      breadth-, depth-first traversals? pre-/in-/post-order?
  *  CopyGraph: cheaper alternative when T:Copy w/ fewer allocs
  *  quickcheck tests, mutate, quickcheck alt?
  *  graph variant shortcuts (e.g. `Graph::new_digraph()`)
@@ -15,9 +13,11 @@
  *      depth-first-search, breadth-first-search
  *  look up vertex / edge by either &'a ref or by &V/(&V,&V) ?
  *      separate functions? or with a neat trait or something?
+ *  separate UnweightedEdge from EdgeT to impl for unweighted graphs only
  *
  *  CLEANUP
  *      consolidate ret/panic behavior (rn we ret None on bad edge insert but panic! on vert)
+ *
  */
 
 use std::rc::Rc;
