@@ -23,7 +23,7 @@ use std::slice;
 use std::collections::{hash_map, HashMap};
 
 mod dir;    use dir::{DirT, Dir, Undir};
-mod edge;   use edge::{EdgeT, Edge}; pub use edge::UnweightedEdge;
+mod edge;   use edge::{EdgeT, Edge, GenEdge}; pub use edge::UnweightedEdge;
 mod vertex; use vertex::{NodeT, Vertex};
 mod iter;
 
@@ -44,7 +44,8 @@ pub struct Graph<V: NodeT, E: EdgeT, D: DirT<E>> {
     // TODO can change `nodes` to a HashSet if we overload Vert::borrow
     //  is that desirable?
     // TODO is it just me or does `<V,E,D>` look like "venereal disease"?
-    edges: Vec<Rc<Edge<V,E,D>>>,
+    //edges: Vec<Rc<Edge<V,E,D>>>,
+    edges: Vec<GenEdge<V,E,D>>,
 }
 
 
@@ -82,7 +83,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
     pub fn vertices(&self) -> iter::Vertices<V,E,D> {
         iter::Vertices::new(self)
     }
-    pub fn edges(&self) -> slice::Iter<Rc<Edge<V,E,D>>> {
+    pub fn edges(&self) -> slice::Iter<GenEdge<V,E,D>> {
         self.edges.iter()
     }
     pub fn breadth_first<'a>(&'a self, start: Option<&'a Vertex<V,E,D>>) 
@@ -93,17 +94,16 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
 
     // modifiers
     pub fn insert_vertex(&mut self, v: V) {
-        assert!(self.nodes.contains_key(&v) == false);
+        assert!(! self.nodes.contains_key(&v));
         let vert = Vertex::new(v);
         self.nodes.insert(vert.get_ref(), vert);
     }
-    fn create_edge(&mut self, e: E, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
+    fn create_edge(&mut self, e: E, l: &V, r: &V) -> Option<GenEdge<V,E,D>> {
         let edge = {
             let lhs = self.get_vertex(l)?;
             let rhs = self.get_vertex(r)?;
             Edge::new(e, lhs.get_ref(), rhs.get_ref())
         };
-        let edge = Rc::new(edge);
         self.edges.push(edge.clone());
         Some(edge)
     }

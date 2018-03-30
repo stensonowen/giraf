@@ -18,6 +18,10 @@ impl<T: fmt::Debug + Ord> EdgeT for T {}
 pub struct UnweightedEdge;
 impl EdgeT for UnweightedEdge {}
 
+pub type DirEdge<V,E>   = Rc<Edge<V, E, Dir<V,E>>>;
+pub type UndirEdge<V,E> = Rc<Edge<V, E, Undir<V,E>>>;
+pub type GenEdge<V,E,D> = Rc<Edge<V, E, D>>;
+
 #[derive(Debug)]
 pub struct Edge<V: NodeT, E: EdgeT, D: DirT<E>> {
     val: E,
@@ -29,8 +33,9 @@ pub struct Edge<V: NodeT, E: EdgeT, D: DirT<E>> {
 }
 
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Edge<V,E,D> {
-    pub(super) fn new(e: E, l: Rc<V>, r: Rc<V>) -> Self {
-        Edge { val: e, lhs: l, rhs: r, _d: PhantomData, }
+    pub(super) fn new(e: E, l: Rc<V>, r: Rc<V>) -> GenEdge<V,E,D> {
+        let e = Edge { val: e, lhs: l, rhs: r, _d: PhantomData, };
+        Rc::new(e)
     }
 }
 

@@ -67,7 +67,7 @@ impl<'a, V: NodeT, E: EdgeT> Iterator for BreadthFirst<'a, V, E, Undir<V,E>> {
         if let Some(cur) = self.this.pop_front() {
             for neighbor in self.graph.get_neighbors(cur) {
                 let val: &V = neighbor.borrow();
-                if self.seen.contains(val) == false {
+                if ! self.seen.contains(val) {
                     self.seen.insert(val);
                     self.next.push_back(neighbor);
                 }
