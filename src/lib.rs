@@ -1,4 +1,3 @@
-#![allow(unused)]
 
 /* TODO
  *  Tree (should be easy, try to make it easily ↔ Graph
@@ -8,6 +7,7 @@
  *  CopyGraph: cheaper alternative when T:Copy w/ fewer allocs
  *  quickcheck tests, mutate, quickcheck alt?
  *  graph variant shortcuts (e.g. `Graph::new_digraph()`)
+ *  remove vertices/edges (assert strong count == 0)
  *  graph ops
  *      depth-first-search, breadth-first-search
  */
@@ -17,9 +17,9 @@ use std::slice::Iter;
 use std::collections::{hash_map, HashMap};
 
 mod dir;    use dir::{DirT, Dir, Undir};
-mod edge;   use edge::{EdgeT, Edge, UnweightedEdge};
+mod edge;   use edge::{EdgeT, Edge};
 mod vertex; use vertex::{NodeT, Vertex};
-mod iters;  use iters::{Vertices};
+mod iter;   use iter::{Vertices};
 
 //mod test;
 
@@ -75,11 +75,9 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
     pub fn vertices(&self) -> Vertices<V,E,D> {
         Vertices::new(self)
     }
-    /*
     pub fn edges(&self) -> Iter<Rc<Edge<V,E,D>>> {
         self.edges.iter()
     }
-    */
 
     // modifiers
     pub fn insert_vertex(&mut self, v: V) {
@@ -106,16 +104,11 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Undir<V,E>> {
         self.nodes.get_mut(r)?.register_neighbor(edge);
         Some(())
     }
-    fn get_neighbors(&self, vert: &V) -> Option<Vec<&Vertex<V, E, Undir<V,E>>>> {
-        let node = self.get_vertex(vert)?;
-        Some(node.get_neighbors_i().map(|v| self.get_vertex(&v).unwrap()).collect())
-    }
-    fn get_neighbors_i<'a>(&'a self, vert: &V) -> 
-        Option<Box<Iterator<Item=&'a Vertex<V, E, Undir<V,E>>> + 'a>>
+    pub fn get_neighbors<'a>(&'a self, vert: &'a Vertex<V, E, Undir<V,E>>)
+        -> iter::Neighbors<'a, V, E, Undir<V,E>>
     {
-        let node = self.get_vertex(vert)?;
-        let iter = node.get_neighbors_i().map(move |v| self.get_vertex(&v).unwrap());
-        Some(Box::new(iter))
+        let neighbors = vert.get_neighbor_edges().iter();
+        iter::Neighbors::undir_neighbors(self, vert, neighbors)
     }
 }
 
@@ -126,23 +119,24 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Dir<V,E>> {
         self.nodes.get_mut(r)?.register_parent(edge);
         Some(())
     }
-    // TODO replace with iterators eventually
-    fn get_parents(&self, vert: &V) -> Option<Vec<&Vertex<V, E, Dir<V,E>>>> {
-        let node = self.get_vertex(vert)?;
-        node.get_parents_i().map(|v| self.get_vertex(v)).collect()
-    }
-    fn get_children(&self, vert: &V) -> Option<Vec<&Vertex<V, E, Dir<V,E>>>> {
-        let node = self.get_vertex(vert)?;
-        node.get_children_i().map(|v| self.get_vertex(v)).collect()
-    }
-    /*
-    fn get_parents_i<'a>(&self, vert: &V) -> 
-        Option<Box<Iterator<Item=&'a Vertex<V, E, Dir<V,E>>> + 'a>> 
+    pub fn get_neighbors<'a>(&'a self, vert: &'a Vertex<V, E, Dir<V,E>>) 
+        -> iter::Neighbors<'a, V, E, Dir<V,E>>
     {
-        let node = self.get_vertex(vert)?;
-        let iter = node.get_parents_i().map(move |v| self.get_vertex(v).unwrap());
-        Some(Box::new(iter))
+        let parents = vert.get_parent_edges().iter();
+        let children = vert.get_child_edges().iter();
+        iter::Neighbors::dir_neighbors(self, vert, parents, children)
     }
-    */
+    pub fn get_parents<'a>(&'a self, vert: &'a Vertex<V, E, Dir<V,E>>) 
+        -> iter::Neighbors<'a, V, E, Dir<V,E>>
+    {
+        let parents = vert.get_parent_edges().iter();
+        iter::Neighbors::parents(self, vert, parents)
+    }
+    pub fn get_children<'a>(&'a self, vert: &'a Vertex<V, E, Dir<V,E>>) 
+        -> iter::Neighbors<'a, V, E, Dir<V,E>>
+    {
+        let children = vert.get_child_edges().iter();
+        iter::Neighbors::children(self, vert, children)
+    }
 }
 

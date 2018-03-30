@@ -33,6 +33,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Vertex<V,E,D> {
     pub(super) fn get_ref(&self) -> Rc<V> {
         self.val.clone()
     }
+    //pub(super) fn get_reachable<'a>(&'a self) -> Box<Iterator<Item=&'a V>+'a> { }
 }
 
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Borrow<V> for Vertex<V,E,D> {
@@ -41,13 +42,14 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Borrow<V> for Vertex<V,E,D> {
     }
 }
 
-use std::iter::Map;
-use std::slice::Iter;
-
 impl<V: NodeT, E: EdgeT> Vertex<V, E, Undir<V,E>> {
     pub(super) fn register_neighbor(&mut self, e: Rc<Edge<V, E, Undir<V,E>>>) {
         self.hood.register_neighbor(e);
     }
+    pub(super) fn get_neighbor_edges(&self) -> &[Rc<Edge<V, E, Undir<V,E>>>] {
+        self.hood.get_neighbors()
+    }
+    /*
     pub(super) fn get_neighbors(&self) -> Vec<Rc<V>> {
         let b = &self.val;
         self.hood.get_neighbors().iter().map(|e| {
@@ -60,6 +62,7 @@ impl<V: NodeT, E: EdgeT> Vertex<V, E, Undir<V,E>> {
             e.get_other_endpoint(b).unwrap()
         }))
     }
+    */
 }
 
 impl<V: NodeT, E: EdgeT> Vertex<V, E, Dir<V,E>> {
@@ -69,6 +72,7 @@ impl<V: NodeT, E: EdgeT> Vertex<V, E, Dir<V,E>> {
     pub(super) fn register_child(&mut self, e: Rc<Edge<V, E, Dir<V,E>>>) {
         self.hood.register_child(e);
     }
+    /*
     pub(super) fn get_parents(&self) -> Vec<&V> {
         self.hood.get_parents().iter().map(|e| e.get_src()).collect()
     }
@@ -80,5 +84,13 @@ impl<V: NodeT, E: EdgeT> Vertex<V, E, Dir<V,E>> {
     }
     pub(super) fn get_children_i<'a>(&'a self) -> Box<Iterator<Item=&'a V>+'a> {
         Box::new(self.hood.get_children().iter().map(|e| e.get_dst()))
+    }
+    */
+
+    pub(super) fn get_parent_edges(&self) -> &[Rc<Edge<V, E, Dir<V,E>>>] {
+        self.hood.get_parents()
+    }
+    pub(super) fn get_child_edges(&self) -> &[Rc<Edge<V, E, Dir<V,E>>>] {
+        self.hood.get_children()
     }
 }

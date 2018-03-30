@@ -5,7 +5,7 @@ use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 use dir::{DirT, Dir, Undir};
-use vertex::{NodeT, Vertex};
+use vertex::{NodeT};
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Edge
