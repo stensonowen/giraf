@@ -22,9 +22,7 @@ pub struct Vertices<'a, V: 'a+NodeT, E: 'a+EdgeT, D: 'a+DirT<E>> {
 
 impl<'a, V: 'a+NodeT, E: 'a+EdgeT, D: 'a+DirT<E>> Vertices<'a,V,E,D> {
     pub(super) fn new(g: &'a Graph<V,E,D>) -> Self {
-        Vertices {
-            iter: g.map_vals(),
-        }
+        Vertices { iter: g.map_vals() }
     }
 }
 
@@ -50,12 +48,9 @@ impl<'a, V: 'a+NodeT, E: 'a+EdgeT, D: 'a+DirT<E>> BreadthFirst<'a,V,E,D> {
     pub(super) fn new(g: &'a Graph<V,E,D>, start: Option<&'a Vertex<V,E,D>>) -> Self {
         let mut queue = VecDeque::new();
         let mut seen = HashSet::with_capacity(g.order());
-        if let Some(first) = start {
+        if let Some(first) = start.or_else(|| g.vertices().next()) {
             queue.push_back(first);
             seen.insert(first.borrow());
-        } else if let Some(random) = g.vertices().next() {
-            queue.push_back(random);
-            seen.insert(random.borrow());
         }
         BreadthFirst { graph: g, this: queue, next: VecDeque::new(), seen, }
     }
@@ -89,17 +84,15 @@ impl<'a, V: NodeT, E: EdgeT> Iterator for BreadthFirst<'a, V, E, Undir<V,E>> {
 
 pub struct DepthFirst<'a, V: 'a+NodeT, E: 'a+EdgeT, D: 'a+DirT<E>> {
     graph: &'a Graph<V,E,D>,
-    seen: HashSet<&'a V>,
     stack: Vec<&'a Vertex<V,E,D>>,
+    seen: HashSet<&'a V>,
 }
 
 impl<'a, V: 'a+NodeT, E: 'a+EdgeT, D: 'a+DirT<E>> DepthFirst<'a,V,E,D> {
     pub(super) fn new(g: &'a Graph<V,E,D>, start: Option<&'a Vertex<V,E,D>>) -> Self {
         let mut stack = Vec::new();
-        if let Some(first) = start {
+        if let Some(first) = start.or_else(|| g.vertices().next()) {
             stack.push(first);
-        } else if let Some(random) = g.vertices().next() {
-            stack.push(random);
         }
         DepthFirst { graph: g, stack, seen: HashSet::with_capacity(g.order()) }
     }
@@ -131,7 +124,6 @@ impl<'a, V: NodeT, E: EdgeT> Iterator for DepthFirst<'a, V, E, Dir<V,E>> {
             let v = next.as_ref();
             if self.seen.contains(v) == false {
                 self.seen.insert(v);
-                //self.graph.get_children(next).for_each(|n| self.stack.push(n));
                 self.graph.get_children(next).for_each(|n| {
                     if self.seen.contains(n.as_ref()) == false {
                         self.stack.push(n);

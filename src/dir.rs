@@ -15,15 +15,12 @@ pub trait DirT<E: EdgeT>: fmt::Debug {
 
 #[derive(Debug)] 
 pub struct Dir<V: NodeT, E: EdgeT> {
-    //children: Vec<Rc<Edge<V, E, Dir<V,E>>>>,
-    //parents: Vec<Rc<Edge<V, E, Dir<V,E>>>>,
     children: Vec<DirEdge<V,E>>,
     parents: Vec<DirEdge<V,E>>,
 }
 
 #[derive(Debug)] 
 pub struct Undir<V: NodeT, E: EdgeT> {
-    //neighbors: Vec<Rc<Edge<V, E, Undir<V,E>>>>,
     neighbors: Vec<UndirEdge<V,E>>,
 }
 

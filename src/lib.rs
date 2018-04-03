@@ -18,6 +18,10 @@
  *  CLEANUP
  *      consolidate ret/panic behavior (rn we ret None on bad edge insert but panic! on vert)
  *
+ *  More trait-based guarantees: make more things trait methods
+ *      so more implementations can be generic (e.g. Neighbor stuff)
+ *      e.g. Vertex/Dir::register_as_lhs or sthg
+ *
  */
 
 use std::rc::Rc;
@@ -47,14 +51,13 @@ pub struct Graph<V: NodeT, E: EdgeT, D: DirT<E>> {
     // TODO can change `nodes` to a HashSet if we overload Vert::borrow
     //  is that desirable?
     // TODO is it just me or does `<V,E,D>` look like "venereal disease"?
-    //edges: Vec<Rc<Edge<V,E,D>>>,
     edges: Vec<GenEdge<V,E,D>>,
 }
 
 
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
     // ctors
-    pub fn new() -> Self { Graph { nodes: HashMap::new(), edges: Vec::new(), } }
+    pub fn new() -> Self { Graph { nodes: HashMap::new(), edges: Vec::new() } }
     pub fn with_capacity(n: usize, m: usize) -> Self {
         Graph { nodes: HashMap::with_capacity(n), edges: Vec::with_capacity(m) }
     }
@@ -87,6 +90,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
         iter::Vertices::new(self)
     }
     pub fn edges(&self) -> slice::Iter<GenEdge<V,E,D>> {
+        // should this be a different Item? e.g. just a &'a (&V,&V)?
         self.edges.iter()
     }
     pub fn breadth_first<'a>(&'a self, start: Option<&'a Vertex<V,E,D>>) 

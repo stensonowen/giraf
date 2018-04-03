@@ -19,7 +19,7 @@ impl<T: fmt::Debug + Eq + Hash> NodeT for T {}
 pub struct Vertex<V: NodeT, E: EdgeT, D: DirT<E>> {
     val: Rc<V>,
     hood: D,
-    _e: ::std::marker::PhantomData<E>,
+    _e: PhantomData<E>,
 }
 
 impl<V: NodeT, E: EdgeT, D: DirT<E>> Vertex<V,E,D> {

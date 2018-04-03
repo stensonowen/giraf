@@ -89,6 +89,7 @@ fn depth_first_lattice_undir() {
             assert_eq!(x, xx/10);
         }
     }
+    assert!(df.next().is_none());
     let mid = g.get_vertex(&5).unwrap();
     assert_eq!(100, g.depth_first(Some(mid)).count());
 }
