@@ -1,4 +1,4 @@
-//#![allow(unused)]
+#![allow(unused)]
 #![allow(unknown_lints, bool_comparison, new_without_default_derive)]
 // `x == false` is better than `!x` and I'll fight anyone who disagrees
 
@@ -14,6 +14,7 @@
  *  look up vertex / edge by either &'a ref or by &V/(&V,&V) ?
  *      separate functions? or with a neat trait or something?
  *  separate UnweightedEdge from EdgeT to impl for unweighted graphs only
+ *  maybe Edge should only contain 'other' vertex and Rc<E> ?
  *
  *  CLEANUP
  *      consolidate ret/panic behavior (rn we ret None on bad edge insert but panic! on vert)
@@ -103,6 +104,9 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Graph<V,E,D> {
     {
         iter::DepthFirst::new(self, start)
     }
+    pub fn components<'a>(&'a self) -> iter::Components<V,E,D> {
+        iter::Components::new(self)
+    }
 
     // modifiers
     pub fn insert_vertex(&mut self, v: V) {
@@ -164,3 +168,40 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Dir<V,E>> {
     }
 }
 
+
+
+
+/*
+impl<V: NodeT, E: EdgeT, D: DirT<E>> Index<V> for Graph<V,E,D> {
+    type Output = ();
+    fn index(&self, idx: V) -> &() {
+        &()
+    }
+}
+*/
+
+/*
+impl<'a, V: NodeT, E: EdgeT, D: DirT<E>> Index<&'a Vertex<V,E,D>> for Graph<V,E,D> {
+    type Output = Vertex<V,E,D>;
+    fn index(&self, idx: &'a Vertex<V,E,D>) -> &Vertex<V,E,D> {
+        idx
+    }
+}
+*/
+
+/*
+use std::ops::Index;
+impl<'a, V: NodeT, E: EdgeT, D: DirT<E>> Index<&'a V> for Graph<V,E,D> {
+    type Output = Vertex<V,E,D>;
+    fn index(&self, idx: &V) -> &Vertex<V,E,D> {
+        self.get_vertex(idx).unwrap()
+    }
+}
+
+impl<'a, V: NodeT, E: EdgeT, D: DirT<E>> Index<&'a Vertex<V,E,D>> for Graph<V,E,D> {
+    type Output = Vertex<V,E,D>;
+    fn index<'b>(&'b self, idx: &'a Vertex<V,E,D>) -> &'b Vertex<V,E,D> {
+        self.get_vertex(idx.get()).unwrap()
+    }
+}
+*/
