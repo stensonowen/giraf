@@ -1,6 +1,5 @@
 
 use std::fmt;
-use std::rc::Rc;
 
 use edge::{EdgeT, GenEdge, DirEdge, UndirEdge};
 use vertex::NodeT;
@@ -32,7 +31,7 @@ impl<V: NodeT, E: EdgeT> DirT<V,E> for Dir<V,E> {
     fn new() -> Self { Dir { children: vec![], parents: vec![] } }
     fn degree(&self) -> usize { self.children.len() + self.parents.len() }
     fn push_src(&mut self, edge: GenEdge<V, E, Self>) { self.parents.push(edge); }
-    fn push_dst(&mut self, edge: GenEdge<V, E, Self>) { /*self.children.push(edge);*/ } // uhhh
+    fn push_dst(&mut self, _edge: GenEdge<V, E, Self>) { /*self.children.push(edge);*/ } // uhhh
     fn get_reachable(&self) -> &[GenEdge<V, E, Self>] { self.get_children() }
 }
 impl<V: NodeT, E: EdgeT> DirT<V,E> for Undir<V,E> {
@@ -44,16 +43,11 @@ impl<V: NodeT, E: EdgeT> DirT<V,E> for Undir<V,E> {
 }
 
 impl<V: NodeT, E: EdgeT> Dir<V,E> {
-    pub(super) fn register_child(&mut self, e: DirEdge<V,E>) { self.children.push(e); }
-    pub(super) fn register_parent(&mut self, e: DirEdge<V,E>) { self.parents.push(e); }
     pub(super) fn get_parents(&self) -> &[DirEdge<V,E>]  { &self.parents[..] }
     pub(super) fn get_children(&self) -> &[DirEdge<V,E>] { &self.children[..] }
 }
 
 impl<V: NodeT, E: EdgeT> Undir<V,E> {
-    pub(super) fn register_neighbor(&mut self, e: UndirEdge<V,E>) {
-        self.neighbors.push(e);
-    }
     pub(super) fn get_neighbors(&self) -> &[UndirEdge<V,E>] {
         &self.neighbors[..]
     }

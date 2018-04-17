@@ -1,7 +1,6 @@
 
 use std::fmt;
 use std::rc::Rc;
-use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 use dir::{DirT, Dir, Undir};
@@ -41,6 +40,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Edge<V,E,D> {
     }
 }
 
+/*
 impl<V: NodeT, E: EdgeT> Edge<V, E, Dir<V,E>> {
     //pub(super) fn get_src(&self) -> &V { &self.lhs }
     //pub(super) fn get_dst(&self) -> &V { &self.rhs }
@@ -58,3 +58,4 @@ impl<V: NodeT, E: EdgeT> Edge<V, E, Undir<V,E>> {
     }
     */
 }
+*/

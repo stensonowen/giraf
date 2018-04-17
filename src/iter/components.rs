@@ -2,7 +2,7 @@
 use std::collections::HashSet;
 
 use Graph;
-use dir::{DirT, Undir, Dir};
+use dir::{DirT};
 use edge::{EdgeT};
 use vertex::{NodeT, Vertex};
 
@@ -36,23 +36,4 @@ impl<'a, V: NodeT, E: EdgeT, D: DirT<V,E>> Iterator for Components<'a,V,E,D> {
         }
     }
 }
-
-/*
-impl<'a, V: NodeT, E: EdgeT> Iterator for Components<'a, V, E, Undir<V,E>> {
-    type Item = Component<'a, V, E, Undir<V,E>>;
-    fn next(&mut self) -> Option<Component<'a, V, E, Undir<V,E>>> {
-        let start = self.graph.vertices().find(|v| !self.seen.contains(v.as_ref()))?;
-        let mut component = Vec::new();
-        for reachable in self.graph.depth_first(Some(start)) {
-            self.seen.insert(reachable.as_ref());
-            component.push(reachable);
-        }
-        if component.is_empty() {
-            None
-        } else {
-            Some(component)
-        }
-    }
-}
-*/
 

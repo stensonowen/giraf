@@ -60,51 +60,12 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> AsRef<V> for Vertex<V,E,D> {
 }
 
 impl<V: NodeT, E: EdgeT> Vertex<V, E, Undir<V,E>> {
-    //pub(super) fn register_neighbor(&mut self, e: Rc<Edge<V, E, Undir<V,E>>>) {
-    pub(super) fn register_neighbor(&mut self, e: UndirEdge<V,E>) {
-        self.hood.register_neighbor(e);
-    }
     pub(super) fn get_neighbor_edges(&self) -> &[UndirEdge<V,E>] {
         self.hood.get_neighbors()
     }
-    /*
-    pub(super) fn get_neighbors(&self) -> Vec<Rc<V>> {
-        let b = &self.val;
-        self.hood.get_neighbors().iter().map(|e| {
-            e.get_other_endpoint(b).unwrap()
-        }).collect()
-    }
-    pub(super) fn get_neighbors_i<'a>(&'a self) -> Box<Iterator<Item=Rc<V>> + 'a> {
-        let b = &self.val;
-        Box::new(self.hood.get_neighbors().iter().map(move |e| {
-            e.get_other_endpoint(b).unwrap()
-        }))
-    }
-    */
 }
 
 impl<V: NodeT, E: EdgeT> Vertex<V, E, Dir<V,E>> {
-    pub(super) fn register_parent(&mut self, e: DirEdge<V,E>) {
-        self.hood.register_parent(e);
-    }
-    pub(super) fn register_child(&mut self, e: DirEdge<V,E>) {
-        self.hood.register_child(e);
-    }
-    /*
-    pub(super) fn get_parents(&self) -> Vec<&V> {
-        self.hood.get_parents().iter().map(|e| e.get_src()).collect()
-    }
-    pub(super) fn get_parents_i<'a>(&'a self) -> Box<Iterator<Item=&'a V>+'a> {
-        Box::new(self.hood.get_parents().iter().map(|e| e.get_src()))
-    }
-    pub(super) fn get_children(&self) -> Vec<&V> {
-        self.hood.get_children().iter().map(|e| e.get_dst()).collect()
-    }
-    pub(super) fn get_children_i<'a>(&'a self) -> Box<Iterator<Item=&'a V>+'a> {
-        Box::new(self.hood.get_children().iter().map(|e| e.get_dst()))
-    }
-    */
-
     pub(super) fn get_parent_edges(&self) -> &[DirEdge<V,E>] {
         self.hood.get_parents()
     }

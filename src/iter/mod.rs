@@ -5,7 +5,7 @@ use std::borrow::Borrow;
 use std::collections::{hash_map, HashSet, VecDeque};
 
 use Graph;
-use dir::{DirT, Undir, Dir};
+use dir::{DirT};
 use edge::{EdgeT};
 use vertex::{NodeT, Vertex};
 
@@ -81,30 +81,6 @@ impl<'a, V: NodeT, E: EdgeT, D: DirT<V,E>> Iterator for BreadthFirst<'a,V,E,D> {
     }
 }
 
-/*
-impl<'a, V: NodeT, E: EdgeT> Iterator for BreadthFirst<'a, V, E, Undir<V,E>> {
-    type Item = &'a Vertex<V, E, Undir<V,E>>;
-    fn next(&mut self) -> Option<&'a Vertex<V, E, Undir<V,E>>> {
-        if let Some(cur) = self.this.pop_front() {
-            for neighbor in self.graph.get_neighbors(cur) {
-                let val: &V = neighbor.borrow();
-                if self.seen.contains(val) == false {
-                    self.seen.insert(val);
-                    self.next.push_back(neighbor);
-                }
-            }
-            Some(cur)
-        } else if self.next.is_empty() {
-            None
-        } else {
-            mem::swap(&mut self.this, &mut self.next);
-            self.next.clear();
-            self.next()
-        }
-    }
-}
-*/
-
 ///////////////////////////////////////////////////////////////////////////////
 // DEPTH-FIRST
 ///////////////////////////////////////////////////////////////////////////////
@@ -142,44 +118,4 @@ impl<'a, V: NodeT, E: EdgeT, D: DirT<V,E>> Iterator for DepthFirst<'a,V,E,D> {
         })
     }
 }
-
-
-/*
-impl<'a, V: NodeT, E: EdgeT> Iterator for DepthFirst<'a, V, E, Undir<V,E>> {
-    type Item = &'a Vertex<V, E, Undir<V,E>>;
-    fn next(&mut self) -> Option<&'a Vertex<V, E, Undir<V,E>>> {
-        self.stack.pop().map(|next| {
-            let v = next.as_ref();
-            if self.seen.contains(v) == false {
-                self.seen.insert(v);
-                self.graph.get_neighbors(next).for_each(|n| {
-                    if self.seen.contains(n.as_ref()) == false {
-                        self.stack.push(n);
-                    }
-                });
-            }
-            next
-        })
-    }
-}
-
-
-impl<'a, V: NodeT, E: EdgeT> Iterator for DepthFirst<'a, V, E, Dir<V,E>> {
-    type Item = &'a Vertex<V, E, Dir<V,E>>;
-    fn next(&mut self) -> Option<&'a Vertex<V, E, Dir<V,E>>> {
-        self.stack.pop().map(|next| {
-            let v = next.as_ref();
-            if self.seen.contains(v) == false {
-                self.seen.insert(v);
-                self.graph.get_children(next).for_each(|n| {
-                    if self.seen.contains(n.as_ref()) == false {
-                        self.stack.push(n);
-                    }
-                });
-            }
-            next
-        })
-    }
-}
-*/
 

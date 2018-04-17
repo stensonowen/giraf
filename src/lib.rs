@@ -31,7 +31,7 @@ use std::rc::Rc;
 use std::collections::{hash_map, HashMap};
 
 mod dir;    use dir::{DirT, Dir, Undir};
-mod edge;   use edge::{EdgeT, Edge, GenEdge}; pub use edge::UnweightedEdge;
+mod edge;   use edge::{EdgeT, Edge}; pub use edge::UnweightedEdge;
 mod vertex; use vertex::{NodeT, Vertex};
 mod iter;
 
@@ -53,8 +53,6 @@ pub struct Graph<V: NodeT, E: EdgeT, D: DirT<V,E>> {
     // TODO can change `nodes` to a HashSet if we overload Vert::borrow
     //  is that desirable?
     // TODO is it just me or does `<V,E,D>` look like "venereal disease"?
-    //edges: Vec<GenEdge<V,E,D>>,
-    //edges: Vec<E>, // TODO get rid of this? no central ownership?
     edges: Vec<Rc<E>>, // TODO get rid of this? no central ownership?
 }
 
@@ -81,15 +79,6 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Graph<V,E,D> {
     {
         self.nodes.contains_key(k)
     }
-    //pub fn get_vertex_val(&self, v: &V) -> Option<&V> 
-    //pub fn get_edge_val(&self, l: &V, r: &V) -> Option<&E> 
-    /*
-    fn get_edge(&self, l: &V, r: &V) -> Option<Rc<Edge<V,E,D>>> {
-        let lhs = self.get_vertex(l)?;
-        let rhs = self.get_vertex(r)?;
-        unimplemented!()
-    }
-    */
 
     // iterators
     fn map_vals(&self) -> hash_map::Values<Rc<V>, Vertex<V,E,D>> {
@@ -102,7 +91,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Graph<V,E,D> {
         -> iter::Neighbors<'a,V,E,D>
     {
         let reachable = vert.get_reachable().iter();
-        iter::Neighbors::reachable(self, vert, reachable)
+        iter::Neighbors::reachable(self, reachable)
     }
     pub fn edges(&self) -> slice::Iter<Rc<E>> {
         // should this be a different Item? e.g. just a &'a (&V,&V)?
@@ -118,7 +107,7 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Graph<V,E,D> {
     {
         iter::DepthFirst::new(self, start)
     }
-    pub fn components<'a>(&'a self) -> iter::Components<V,E,D> {
+    pub fn components(&self) -> iter::Components<V,E,D> {
         iter::Components::new(self)
     }
 
@@ -146,41 +135,37 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Undir<V,E>> {
     pub fn insert_undirected_edge(&mut self, e: E, l: &V, r: &V) -> Option<&E> {
         self.insert_edge(e, l, r)
     }
-    /*
     pub fn get_neighbors<'a>(&'a self, vert: &'a Vertex<V, E, Undir<V,E>>)
         -> iter::Neighbors<'a, V, E, Undir<V,E>>
     {
         let neighbors = vert.get_neighbor_edges().iter();
-        iter::Neighbors::undir_neighbors(self, vert, neighbors)
+        iter::Neighbors::undir_neighbors(self, neighbors)
     }
-    */
 }
 
 impl<V: NodeT, E: EdgeT> Graph<V, E, Dir<V,E>> {
     pub fn insert_directed_edge(&mut self, e: E, l: &V, r: &V) -> Option<&E> {
         self.insert_edge(e, l, r)
     }
-    /*
     pub fn get_neighbors<'a>(&'a self, vert: &'a Vertex<V, E, Dir<V,E>>) 
         -> iter::Neighbors<'a, V, E, Dir<V,E>>
     {
         let parents = vert.get_parent_edges().iter();
         let children = vert.get_child_edges().iter();
-        iter::Neighbors::dir_neighbors(self, vert, parents, children)
+        iter::Neighbors::dir_neighbors(self, parents, children)
     }
     pub fn get_parents<'a>(&'a self, vert: &'a Vertex<V, E, Dir<V,E>>) 
         -> iter::Neighbors<'a, V, E, Dir<V,E>>
     {
         let parents = vert.get_parent_edges().iter();
-        iter::Neighbors::parents(self, vert, parents)
+        iter::Neighbors::parents(self, parents)
     }
     pub fn get_children<'a>(&'a self, vert: &'a Vertex<V, E, Dir<V,E>>) 
         -> iter::Neighbors<'a, V, E, Dir<V,E>>
     {
         let children = vert.get_child_edges().iter();
-        iter::Neighbors::children(self, vert, children)
+        iter::Neighbors::children(self, children)
     }
-    */
 }
 
 
