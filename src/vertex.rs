@@ -6,7 +6,7 @@ use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 use dir::{DirT, Undir, Dir};
-use edge::{EdgeT, DirEdge, UndirEdge};
+use edge::{EdgeT, GenEdge, DirEdge, UndirEdge};
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Vertex
@@ -16,13 +16,13 @@ pub trait NodeT: fmt::Debug + Eq + Hash {}
 impl<T: fmt::Debug + Eq + Hash> NodeT for T {}
 
 #[derive(Debug)]
-pub struct Vertex<V: NodeT, E: EdgeT, D: DirT<E>> {
+pub struct Vertex<V: NodeT, E: EdgeT, D: DirT<V,E>> {
     val: Rc<V>,
     hood: D,
     _e: PhantomData<E>,
 }
 
-impl<V: NodeT, E: EdgeT, D: DirT<E>> Vertex<V,E,D> {
+impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Vertex<V,E,D> {
     pub(crate) fn new(val: V) -> Self {
         Vertex { val: Rc::new(val), hood: D::new(), _e: PhantomData, }
     }
@@ -35,15 +35,25 @@ impl<V: NodeT, E: EdgeT, D: DirT<E>> Vertex<V,E,D> {
     pub fn degree(&self) -> usize {
         self.hood.degree()
     }
+
+    pub(super) fn register_as_src(&mut self, edge: GenEdge<V,E,D>) {
+        self.hood.push_src(edge);
+    }
+    pub(super) fn register_as_dst(&mut self, edge: GenEdge<V,E,D>) {
+        self.hood.push_dst(edge);
+    }
+    pub(super) fn get_reachable(&self) -> &[GenEdge<V,E,D>] {
+        self.hood.get_reachable()
+    }
 }
 
-impl<V: NodeT, E: EdgeT, D: DirT<E>> Borrow<V> for Vertex<V,E,D> {
+impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Borrow<V> for Vertex<V,E,D> {
     fn borrow(&self) -> &V {
         &self.val
     }
 }
 
-impl<V: NodeT, E: EdgeT, D: DirT<E>> AsRef<V> for Vertex<V,E,D> {
+impl<V: NodeT, E: EdgeT, D: DirT<V,E>> AsRef<V> for Vertex<V,E,D> {
     fn as_ref(&self) -> &V {
         &self.val
     }
