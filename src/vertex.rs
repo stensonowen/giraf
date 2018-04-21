@@ -29,18 +29,31 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Vertex<V,E,D> {
     pub(super) fn get_ref(&self) -> Rc<V> {
         self.val.clone()
     }
+
     pub fn get(&self) -> &V {
         &self.val
     }
     pub fn degree(&self) -> usize {
         self.hood.degree()
     }
+    pub fn edge_to(&self, other: &V) -> Option<&E> {
+        // TODO maybe this should return `Rc<E>`?
+        // It's a little clunkier but it means the vertex is still mutable
+        // but if `self` exists at all then the graph is immutable, 
+        //  and `self` isn't mutated anyway
+        self.hood.get_reachable().iter()
+            .find(|&e| e.get_end() == other)
+            .map(|e| e.as_ref())
+    }
+    pub fn reaches(&self, other: &V) -> bool {
+        self.edge_to(other).is_some()
+    }
 
     pub(super) fn register_as_src(&mut self, edge: GenEdge<V,E,D>) {
-        self.hood.push_src(edge);
+        self.hood.push_dst(edge);
     }
     pub(super) fn register_as_dst(&mut self, edge: GenEdge<V,E,D>) {
-        self.hood.push_dst(edge);
+        self.hood.push_src(edge);
     }
     pub(super) fn get_reachable(&self) -> &[GenEdge<V,E,D>] {
         self.hood.get_reachable()

@@ -31,7 +31,8 @@ impl<V: NodeT, E: EdgeT> DirT<V,E> for Dir<V,E> {
     fn new() -> Self { Dir { children: vec![], parents: vec![] } }
     fn degree(&self) -> usize { self.children.len() + self.parents.len() }
     fn push_src(&mut self, edge: GenEdge<V, E, Self>) { self.parents.push(edge); }
-    fn push_dst(&mut self, _edge: GenEdge<V, E, Self>) { /*self.children.push(edge);*/ } // uhhh
+    //fn push_dst(&mut self, _edge: GenEdge<V, E, Self>) { /*self.children.push(edge);*/ } // uhhh
+    fn push_dst(&mut self, _edge: GenEdge<V, E, Self>) { self.children.push(_edge); } // uh
     fn get_reachable(&self) -> &[GenEdge<V, E, Self>] { self.get_children() }
 }
 impl<V: NodeT, E: EdgeT> DirT<V,E> for Undir<V,E> {

@@ -38,6 +38,15 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Edge<V,E,D> {
     pub fn get_end(&self) -> &V {
         &self.end
     }
+    pub fn get_val(&self) -> Rc<E> {
+        self.val.clone()
+    }
+}
+
+impl<V: NodeT, E: EdgeT, D: DirT<V,E>> AsRef<E> for Edge<V,E,D> {
+    fn as_ref(&self) -> &E {
+        &self.val
+    }
 }
 
 /*

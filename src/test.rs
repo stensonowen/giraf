@@ -181,3 +181,52 @@ fn foo() {
 }
 
 */
+
+///////////////////////////////////////////////////////////////////////////////
+//  Regression tests
+///////////////////////////////////////////////////////////////////////////////
+
+#[test]
+fn directed_neighborhood() {
+    // previously a directed edge was being inserted as if undirected, so its 
+    //  converse was also being added (e.g. B→A)
+    let mut g: Graph<char,u8,_> = Graph::directed();
+    g.insert_vertex('A');
+    g.insert_vertex('B');
+    g.insert_edge(11, &'A', &'B');
+    assert_eq!(1, g.size());
+
+    let a = g.get_vertex(&'A').unwrap();
+    assert_eq!(0, g.get_parents(a).count());
+    assert_eq!(1, g.get_children(a).count());
+    assert_eq!(1, a.degree());
+
+    let b = g.get_vertex(&'B').unwrap();
+    assert_eq!(1, g.get_parents(b).count());
+    assert_eq!(0, g.get_children(b).count());
+    assert_eq!(1, b.degree()); // TODO should this be 0 or 1?
+
+    assert_eq!(Some(&11), a.edge_to(&'B'));
+    assert_eq!(None, b.edge_to(&'A'));
+    assert_eq!(None, a.edge_to(&'A'));
+    assert_eq!(None, b.edge_to(&'B'));
+}
+
+#[test]
+fn undirected_neighborhood() {
+    // because an undirected edge is represented as a pair of directed edges,
+    //  each edge was counted twice
+    let mut g: Graph<char,u8,_> = Graph::undirected();
+    g.insert_vertex('X');
+    g.insert_vertex('Y');
+    g.insert_edge(12, &'X', &'Y');
+    assert_eq!(1, g.size());
+
+    let x = g.get_vertex(&'X').unwrap();
+    let y = g.get_vertex(&'Y').unwrap();
+    assert_eq!(Some(&12), x.edge_to(&'Y'));
+    assert_eq!(Some(&12), y.edge_to(&'X'));
+    assert_eq!(1, x.degree());
+    assert_eq!(1, y.degree());
+}
+

@@ -14,8 +14,11 @@
  *  look up vertex / edge by either &'a ref or by &V/(&V,&V) ?
  *      separate functions? or with a neat trait or something?
  *  separate UnweightedEdge from EdgeT to impl for unweighted graphs only
- *  maybe Edge should only contain 'other' vertex and Rc<E> ?
  *  pretty cool to store neighbors as a HashMap<Rc<V>, Rc<E>>
+ *  better way to create new Graph. macro maybe?
+ *  Make `Vertex` generic over values that implement `Clone`
+ *      then can use `Rc` in common case or just `V` in edge case
+ *      constructor can require `Copy` to make sure it's not abused
  *
  *  CLEANUP
  *      consolidate ret/panic behavior (rn we ret None on bad edge insert but panic! on vert)
@@ -28,6 +31,7 @@
 
 use std::slice;
 use std::rc::Rc;
+use std::borrow::Borrow;
 use std::collections::{hash_map, HashMap};
 
 mod dir;    use dir::{DirT, Dir, Undir};
@@ -56,6 +60,9 @@ pub struct Graph<V: NodeT, E: EdgeT, D: DirT<V,E>> {
     edges: Vec<Rc<E>>, // TODO get rid of this? no central ownership?
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// All Graphs
+///////////////////////////////////////////////////////////////////////////////
 
 impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Graph<V,E,D> {
     // ctors
@@ -65,19 +72,38 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Graph<V,E,D> {
     }
 
     // accessors
+    /// Number of edges in the graph
     pub fn size(&self) -> usize { 
         self.edges.len()
     }
+    /// Number of vertices in the graph
     pub fn order(&self) -> usize {
         self.nodes.len()
     }
-    fn get_vertex(&self, v: &V) -> Option<&Vertex<V,E,D>> {
+    pub fn is_empty(&self) -> bool {
+        debug_assert!(self.order() > 0 || self.size() == 0); // if n=0 then m=0
+        self.order() == 0
+    }
+    pub fn get_vertex<Q: NodeT>(&self, v: &Q) -> Option<&Vertex<V,E,D>> 
+        where Rc<V>: Borrow<Q>
+    {
         self.nodes.get(v)
     }
-    pub fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool 
-        where Rc<V>: ::std::borrow::Borrow<Q>, Q: Eq + ::std::hash::Hash 
-    {
+    pub fn contains_key<Q: NodeT>(&self, k: &Q) -> bool where Rc<V>: Borrow<Q> {
         self.nodes.contains_key(k)
+    }
+    pub fn edge_between<Q: NodeT>(&self, q1: &Q, q2: &Q) -> Option<&E> 
+        where Rc<V>: Borrow<Q>
+    {
+        let v1 = self.get_vertex(q1)?; // error or something?
+        let v2 = self.get_vertex(q2)?; // error or something?
+        v1.edge_to(v2.as_ref())
+            .or_else(|| v2.edge_to(v1.as_ref()))
+    }
+    pub fn are_adjacent<Q: NodeT>(&self, q1: &Q, q2: &Q) -> bool
+        where Rc<V>: Borrow<Q>
+    {
+        self.edge_between(q1, q2).is_some()
     }
 
     // iterators
@@ -112,10 +138,15 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Graph<V,E,D> {
     }
 
     // modifiers
-    pub fn insert_vertex(&mut self, v: V) {
-        assert!(self.nodes.contains_key(&v) == false);
+    pub fn insert_vertex(&mut self, v: V) -> Option<Rc<V>> {
+        // can't return an `Option<Vertex<V,E,D>>` because then G can't mutate
+        // must return an Rc<V>
+        if self.nodes.contains_key(&v) { return None }
+        //assert!(self.nodes.contains_key(&v) == false);
         let vert = Vertex::new(v);
+        let v_rc = vert.get_ref();
         self.nodes.insert(vert.get_ref(), vert);
+        Some(v_rc)
     }
     pub fn insert_edge(&mut self, e: E, l: &V, r: &V) -> Option<&E> {
         let edge = Rc::new(e);
@@ -131,7 +162,14 @@ impl<V: NodeT, E: EdgeT, D: DirT<V,E>> Graph<V,E,D> {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Undirected Graphs
+///////////////////////////////////////////////////////////////////////////////
+
 impl<V: NodeT, E: EdgeT> Graph<V, E, Undir<V,E>> {
+    pub fn undirected() -> Self {
+        Graph::new()
+    }
     pub fn insert_undirected_edge(&mut self, e: E, l: &V, r: &V) -> Option<&E> {
         self.insert_edge(e, l, r)
     }
@@ -143,7 +181,14 @@ impl<V: NodeT, E: EdgeT> Graph<V, E, Undir<V,E>> {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Directed Graphs
+///////////////////////////////////////////////////////////////////////////////
+
 impl<V: NodeT, E: EdgeT> Graph<V, E, Dir<V,E>> {
+    pub fn directed() -> Self {
+        Graph::new()
+    }
     pub fn insert_directed_edge(&mut self, e: E, l: &V, r: &V) -> Option<&E> {
         self.insert_edge(e, l, r)
     }
